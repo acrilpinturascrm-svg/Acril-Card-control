@@ -68,6 +68,12 @@
   to = "https://api.acrilcard.com/:splat"
   status = 200
 
+# SPA Redirect - Todas las rutas deben servir index.html para React Router
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
 # Configuración de funciones (si se agregan en el futuro)
 [functions]
   directory = "netlify/functions"
