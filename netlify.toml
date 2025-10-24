@@ -20,6 +20,9 @@
   REACT_APP_WHATSAPP_COUNTRY_CODE = "52"
   REACT_APP_SECURE_COOKIES = "true"
   REACT_APP_LOG_LEVEL = "warn"
+  # Google OAuth - Configurar en Netlify Dashboard (Site settings → Environment variables)
+  # REACT_APP_GOOGLE_CLIENT_ID = "tu-client-id.apps.googleusercontent.com"
+  # REACT_APP_GOOGLE_API_KEY = "tu-api-key"
 
 # Variables de entorno para desarrollo (branch develop)
 [context.deploy-preview.environment]
