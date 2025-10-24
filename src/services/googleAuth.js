@@ -114,6 +114,7 @@ class GoogleAuthService {
         const client = window.google.accounts.oauth2.initTokenClient({
           client_id: this.clientId,
           scope: this.scopes,
+          ux_mode: 'popup', // Usar popup en lugar de redirect
           callback: async (response) => {
             if (response.error) {
               console.error('❌ Error en autenticación:', response);
@@ -149,8 +150,8 @@ class GoogleAuthService {
           },
         });
 
-        // Solicitar el token
-        client.requestAccessToken();
+        // Solicitar el token con prompt para seleccionar cuenta
+        client.requestAccessToken({ prompt: 'consent' });
       });
     } catch (error) {
       console.error('❌ Error en signIn:', error);
