@@ -1,0 +1,51 @@
+{
+  "name": "acril-card-control",
+  "version": "1.0.0",
+  "description": "Sistema de tarjetas de fidelización digital",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "prebuild": "npm run lint",
+    "lint": "echo 'Linting not configured yet'",
+    "preview": "npm run build && npx serve -s build -l 3000",
+    "analyze": "npm run build && npx source-map-explorer 'build/static/js/*.js'",
+    "clean": "rm -rf build node_modules/.cache",
+    "setup": "npm install && npm run build"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^7.3.1",
+    "@testing-library/jest-dom": "^6.4.2",
+    "@testing-library/react": "^14.2.1",
+    "@testing-library/user-event": "^14.5.2",
+    "gapi-script": "^1.2.0",
+    "lucide-react": "^0.350.0",
+    "prop-types": "^15.8.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.28.5",
+    "react-scripts": "5.0.1",
+    "web-vitals": "^3.5.1"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14"
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    },
+    {
+      "source": "/static/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/manifest.json",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/manifest+json"
+        }
+      ]
+    }
+  ],
+  "env": {
+    "REACT_APP_PUBLIC_BASE_URL": "https://acrilcard.vercel.app",
+    "REACT_APP_ENVIRONMENT": "production",
+    "REACT_APP_PWA_ENABLED": "true",
+    "REACT_APP_WHATSAPP_ENABLED": "true",
+    "REACT_APP_WHATSAPP_COUNTRY_CODE": "52",
+    "REACT_APP_SECURE_COOKIES": "true",
+    "REACT_APP_LOG_LEVEL": "warn"
+  },
+  "functions": {
+    "src": "api/**/*.js",
+    "runtime": "nodejs18.x"
+  }
+}

@@ -1,0 +1,79 @@
+# Netlify Configuration - ACRILCARD
+# Archivo de configuración para despliegue en Netlify
+
+[build]
+  # Comando de construcción
+  command = "npm run build"
+
+  # Directorio de publicación
+  publish = "build"
+
+  # Versión de Node.js
+  node_version = "18"
+
+# Variables de entorno para producción
+[context.production.environment]
+  REACT_APP_PUBLIC_BASE_URL = "https://acrilcard.netlify.app"
+  REACT_APP_ENVIRONMENT = "production"
+  REACT_APP_PWA_ENABLED = "true"
+  REACT_APP_WHATSAPP_ENABLED = "true"
+  REACT_APP_WHATSAPP_COUNTRY_CODE = "52"
+  REACT_APP_SECURE_COOKIES = "true"
+  REACT_APP_LOG_LEVEL = "warn"
+
+# Variables de entorno para desarrollo (branch develop)
+[context.deploy-preview.environment]
+  REACT_APP_PUBLIC_BASE_URL = "https://deploy-preview-[branch-name]--acrilcard.netlify.app"
+  REACT_APP_ENVIRONMENT = "staging"
+  REACT_APP_PWA_ENABLED = "true"
+  REACT_APP_WHATSAPP_ENABLED = "true"
+  REACT_APP_WHATSAPP_COUNTRY_CODE = "52"
+  REACT_APP_SECURE_COOKIES = "false"
+  REACT_APP_LOG_LEVEL = "info"
+
+# Variables de entorno para branch main (antes de producción)
+[context.branch-deploy.environment]
+  REACT_APP_PUBLIC_BASE_URL = "https://branch-deploy-[branch-name]--acrilcard.netlify.app"
+  REACT_APP_ENVIRONMENT = "staging"
+  REACT_APP_PWA_ENABLED = "true"
+  REACT_APP_WHATSAPP_ENABLED = "true"
+  REACT_APP_WHATSAPP_COUNTRY_CODE = "52"
+  REACT_APP_SECURE_COOKIES = "false"
+  REACT_APP_LOG_LEVEL = "info"
+
+# Configuración de headers para PWA
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Headers específicos para archivos estáticos
+[[headers]]
+  for = "/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Headers para el manifest.json
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Content-Type = "application/manifest+json"
+
+# Redirecciones (si es necesario)
+[[redirects]]
+  from = "/api/*"
+  to = "https://api.acrilcard.com/:splat"
+  status = 200
+
+# Configuración de funciones (si se agregan en el futuro)
+[functions]
+  directory = "netlify/functions"
+
+# Configuración de formularios (si se agregan en el futuro)
+[forms]
+  [forms."contact"]
+    fields = ["name", "email", "message"]
+    to = "contact@acrilcard.com"
