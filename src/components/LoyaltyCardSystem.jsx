@@ -883,10 +883,10 @@ const addCustomer = useCallback(async () => {
             </div>
 
             {/* Panel derecho - Lista y Detalles del cliente */}
-            <div className="flex flex-col h-full min-h-0">
+            <div className="flex flex-col h-full min-h-0 space-y-4">
               {!selectedCustomer ? (
                 /* Lista de clientes con scroll independiente */
-                <div className="h-full min-h-0 flex flex-col">
+                <div className="h-full min-h-0">
                   <CustomerList
                     customers={customers}
                     stampsPerReward={stampsPerReward}

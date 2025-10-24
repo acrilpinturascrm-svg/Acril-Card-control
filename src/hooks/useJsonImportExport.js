@@ -111,24 +111,41 @@ export const useJsonExport = () => {
 
   const exportCustomersToJSON = useCallback(() => {
     try {
+      const now = new Date();
       const payload = {
-        exportedAt: new Date().toISOString(),
+        exportedAt: now.toISOString(),
+        exportedBy: 'ACRILCARD System',
+        version: '1.6.0',
         count: customers.length,
+        device: navigator.userAgent.includes('Mobile') ? 'mobile' : 'desktop',
         customers,
       };
+      
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      const dateStr = new Date().toISOString().slice(0, 10);
+      
+      // Nombre más descriptivo: ACRILCARD_backup_2025-10-24_15-30_150clientes.json
+      const dateStr = now.toISOString().slice(0, 10);
+      const timeStr = now.toTimeString().slice(0, 5).replace(':', '-');
       a.href = url;
-      a.download = `customers-${dateStr}.json`;
+      a.download = `ACRILCARD_backup_${dateStr}_${timeStr}_${customers.length}clientes.json`;
+      
       document.body.appendChild(a);
       a.click();
       setTimeout(() => {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
       }, 0);
-      showSuccess('Datos exportados correctamente');
+      
+      // Guardar info del último backup
+      localStorage.setItem('lastBackupInfo', JSON.stringify({
+        date: now.toISOString(),
+        count: customers.length,
+        filename: `ACRILCARD_backup_${dateStr}_${timeStr}_${customers.length}clientes.json`
+      }));
+      
+      showSuccess(`✅ ${customers.length} clientes exportados correctamente`);
     } catch (error) {
       console.error('Error al exportar clientes:', error);
       showError('Error al exportar datos a JSON');
