@@ -14,6 +14,7 @@ import { deleteCustomerRecord as pbDeleteCustomerRecord } from '../services/cust
 
 // Importar utilidades de lógica de negocio
 import { generateCustomerCode, digitsOnly, normalizeStr, getProgressPercentage } from '../utils/logic';
+import { getPublicBaseUrl } from '../utils/publicUrl';
 
 // Hook personalizado para manejar eventos de scroll con passive: true
 const usePassiveScroll = (ref, handler) => {
@@ -726,7 +727,7 @@ const addCustomer = useCallback(async () => {
 
   const copyCustomerLink = useCallback(async (customerCode) => {
     try {
-      const baseUrl = process.env.REACT_APP_PUBLIC_BASE_URL || window.location.origin;
+      const baseUrl = getPublicBaseUrl();
       const link = `${baseUrl}/card?customer=${customerCode}`;
       await navigator.clipboard.writeText(link);
       showSuccess('Enlace copiado al portapapeles');

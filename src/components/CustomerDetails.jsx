@@ -5,6 +5,7 @@ import { Button, InputField } from './common';
 import { useCustomers } from '../contexts/CustomerContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { enviarTarjetaPorWhatsApp } from '../utils/whatsapp';
+import { getPublicBaseUrl } from '../utils/publicUrl';
 import { getProgressPercentage } from '../utils/logic';
 import { generateCustomerLink } from '../utils/customerDataEncoder';
 import WhatsAppPreviewModal from './WhatsAppPreviewModal';
@@ -91,7 +92,7 @@ const StampControls = React.memo(({
     const businessName = localStorage.getItem('whatsapp_business_name') || 'ACRIL Pinturas';
     const sellosFaltantes = stampsPerReward - currentStamps;
     const tienePremioPendiente = totalRewards > 0;
-    const baseUrl = process.env.REACT_APP_PUBLIC_BASE_URL || window.location.origin;
+    const baseUrl = getPublicBaseUrl();
     const linkTarjeta = `${baseUrl}/card?customer=${encodeURIComponent(customer.code)}`;
     
     const ahora = new Date();
@@ -193,7 +194,7 @@ const StampControls = React.memo(({
 
   const handleCopyLink = useCallback(async () => {
     try {
-      const baseUrl = process.env.REACT_APP_PUBLIC_BASE_URL || window.location.origin;
+      const baseUrl = getPublicBaseUrl();
       const link = generateCustomerLink(baseUrl, customer);
       await navigator.clipboard.writeText(link);
     } catch (error) {
@@ -278,7 +279,7 @@ const StampControls = React.memo(({
           stampsPerReward: stampsPerReward,
           currentStamps: currentStamps,
           totalRewards: totalRewards,
-          link: `${process.env.REACT_APP_PUBLIC_BASE_URL || window.location.origin}/card?customer=${encodeURIComponent(customer.code)}`
+          link: `${getPublicBaseUrl()}/card?customer=${encodeURIComponent(customer.code)}`
         }}
       />
     </div>

@@ -14,6 +14,7 @@
  */
 
 import { encodeCustomerData } from './customerDataEncoder.js';
+import { getPublicBaseUrl as getPublicBaseUrlUtil } from './publicUrl.js';
 
 // Referencia global para la ventana de WhatsApp
 let whatsappWindow = null;
@@ -58,37 +59,8 @@ function detectCountry() {
 }
 
 function getPublicBaseUrl(overrideBaseUrl) {
-  if (overrideBaseUrl) return String(overrideBaseUrl).replace(/\/$/, '');
-  
-  if (typeof window !== 'undefined' && window.__PUBLIC_BASE_URL__) {
-    return String(window.__PUBLIC_BASE_URL__).replace(/\/$/, '');
-  }
-  
-  if (typeof process !== 'undefined' && process.env && process.env.REACT_APP_PUBLIC_BASE_URL) {
-    return String(process.env.REACT_APP_PUBLIC_BASE_URL).replace(/\/$/, '');
-  }
-
-  // Detección automática de producción
-  if (typeof window !== 'undefined' && window.location) {
-    const hostname = window.location.hostname;
-    
-    // Dominios de producción conocidos
-    if (hostname.includes('netlify.app') || 
-        hostname.includes('vercel.app') || 
-        hostname.includes('github.io') ||
-        hostname.includes('herokuapp.com') ||
-        hostname.includes('firebase.app') ||
-        (!hostname.includes('localhost') && !hostname.includes('127.0.0.1'))) {
-      return window.location.origin;
-    }
-  }
-  
-  // Fallback para desarrollo local
-  if (typeof window !== 'undefined' && window.location && window.location.origin) {
-    return window.location.origin;
-  }
-  
-  return 'http://localhost:3000';
+  // Usar la utilidad centralizada que maneja correctamente GitHub Pages
+  return getPublicBaseUrlUtil(overrideBaseUrl);
 }
 
 function toDigits(value) {
