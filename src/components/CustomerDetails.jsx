@@ -6,6 +6,7 @@ import { useCustomers } from '../contexts/CustomerContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { enviarTarjetaPorWhatsApp } from '../utils/whatsapp';
 import { getProgressPercentage } from '../utils/logic';
+import { generateCustomerLink } from '../utils/customerDataEncoder';
 import WhatsAppPreviewModal from './WhatsAppPreviewModal';
 
 const CustomerStats = React.memo(({ customer, stampsPerReward }) => {
@@ -193,12 +194,12 @@ const StampControls = React.memo(({
   const handleCopyLink = useCallback(async () => {
     try {
       const baseUrl = process.env.REACT_APP_PUBLIC_BASE_URL || window.location.origin;
-      const link = `${baseUrl}/card?customer=${customer.code}`;
+      const link = generateCustomerLink(baseUrl, customer);
       await navigator.clipboard.writeText(link);
     } catch (error) {
       console.error('Error copying link:', error);
     }
-  }, [customer.code]);
+  }, [customer]);
 
   return (
     <div className="space-y-6">

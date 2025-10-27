@@ -164,6 +164,23 @@ export function enviarTarjetaPorWhatsApp(telefonoCliente, nombreCliente, idClien
       if (!shouldContinue) return false;
     }
 
+    // Construir datos del cliente para codificar en URL (sistema híbrido)
+    const customerData = {
+      name: nombreCliente,
+      code: opciones.customerCode || idCliente,
+      stamps: opciones.stamps || 0,
+      purchaseHistory: (opciones.purchaseHistory || []).slice(-5) // Solo últimas 5
+    };
+    
+    // Codificar datos en base64
+    let encodedData = '';
+    try {
+      const jsonString = JSON.stringify(customerData);
+      encodedData = btoa(encodeURIComponent(jsonString));
+    } catch (error) {
+      console.warn('No se pudieron codificar datos del cliente:', error);
+    }
+    
     // Construir link público con parámetros adicionales para mejor tracking
     const linkParams = new URLSearchParams({
       utm_source: 'whatsapp',
@@ -174,8 +191,14 @@ export function enviarTarjetaPorWhatsApp(telefonoCliente, nombreCliente, idClien
     
     // Usar customerCode si está disponible, sino usar idCliente como fallback
     const customerIdentifier = opciones.customerCode || idCliente;
+    
     // Usar ruta /card para vista pública (no requiere autenticación)
-    const linkTarjeta = `${base}/card?customer=${encodeURIComponent(customerIdentifier)}&${linkParams.toString()}`;
+    // Incluir datos codificados para sistema híbrido
+    let linkTarjeta = `${base}/card?customer=${encodeURIComponent(customerIdentifier)}`;
+    if (encodedData) {
+      linkTarjeta += `&data=${encodedData}`;
+    }
+    linkTarjeta += `&${linkParams.toString()}`;
 
     // Datos del cliente para mensaje personalizado
     const sellosActuales = Number.isFinite(opciones.stamps) ? opciones.stamps : 0;

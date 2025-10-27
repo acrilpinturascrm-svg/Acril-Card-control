@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Award, Star, Gift, Calendar, ShoppingBag } from 'lucide-react';
+import { decodeCustomerData } from '../utils/customerDataEncoder';
 
 /**
  * Componente público para mostrar la tarjeta de fidelidad del cliente
  * No requiere autenticación - accesible desde enlaces de WhatsApp
+ * Sistema híbrido: Intenta localStorage primero, luego datos de URL
  */
 const PublicCustomerCard = () => {
   const [searchParams] = useSearchParams();
@@ -13,59 +15,81 @@ const PublicCustomerCard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [stampsPerReward, setStampsPerReward] = useState(10);
+  const [dataSource, setDataSource] = useState(''); // Para debugging
 
   useEffect(() => {
     const loadCustomer = () => {
       try {
-        // Obtener parámetro customer de la URL
+        // Obtener parámetros de la URL
         const customerParam = searchParams.get('customer');
+        const encodedData = searchParams.get('data');
         
         console.log('🔍 Buscando cliente con parámetro:', customerParam);
+        console.log('📦 Datos codificados en URL:', encodedData ? 'Sí' : 'No');
         
-        if (!customerParam) {
+        if (!customerParam && !encodedData) {
           setError('No se especificó un cliente en el enlace.');
           setLoading(false);
           return;
         }
 
-        // Cargar clientes desde localStorage
+        // ESTRATEGIA 1: Intentar cargar desde localStorage (si existe)
         const stored = localStorage.getItem('customers');
-        if (!stored) {
-          console.error('❌ No hay datos en localStorage');
-          setError('No se encontraron datos de clientes. Asegúrate de que la aplicación tenga clientes registrados.');
-          setLoading(false);
-          return;
+        if (stored && customerParam) {
+          console.log('📂 Intentando cargar desde localStorage...');
+          try {
+            const customers = JSON.parse(stored);
+            console.log('📋 Total de clientes en localStorage:', customers.length);
+            
+            // Buscar cliente por código o ID
+            const foundCustomer = customers.find(c => {
+              const matchCode = c.code === customerParam;
+              const matchId = c.id === customerParam;
+              return matchCode || matchId;
+            });
+
+            if (foundCustomer) {
+              console.log('✅ Cliente encontrado en localStorage:', foundCustomer.name, foundCustomer.code);
+              setCustomer(foundCustomer);
+              setDataSource('localStorage');
+              
+              // Cargar configuración de sellos
+              const savedStamps = localStorage.getItem('stampsPerReward');
+              if (savedStamps) {
+                setStampsPerReward(parseInt(savedStamps, 10));
+              }
+              
+              setLoading(false);
+              return; // Éxito, salir
+            } else {
+              console.log('⚠️ Cliente no encontrado en localStorage, intentando con datos de URL...');
+            }
+          } catch (localStorageError) {
+            console.warn('⚠️ Error al leer localStorage:', localStorageError);
+          }
         }
 
-        const customers = JSON.parse(stored);
-        console.log('📋 Total de clientes en localStorage:', customers.length);
-        
-        // Buscar cliente por código o ID
-        const foundCustomer = customers.find(c => {
-          const matchCode = c.code === customerParam;
-          const matchId = c.id === customerParam;
-          console.log(`Comparando: ${c.code} === ${customerParam} (${matchCode}) || ${c.id} === ${customerParam} (${matchId})`);
-          return matchCode || matchId;
-        });
-
-        if (!foundCustomer) {
-          console.error('❌ Cliente no encontrado. Parámetro:', customerParam);
-          console.log('Códigos disponibles:', customers.map(c => c.code).join(', '));
-          setError(`Cliente no encontrado. Código buscado: ${customerParam}`);
-          setLoading(false);
-          return;
+        // ESTRATEGIA 2: Intentar decodificar datos de la URL (fallback)
+        if (encodedData) {
+          console.log('🔓 Intentando decodificar datos de la URL...');
+          const decodedCustomer = decodeCustomerData(encodedData);
+          
+          if (decodedCustomer) {
+            console.log('✅ Cliente decodificado de URL:', decodedCustomer.name, decodedCustomer.code);
+            setCustomer(decodedCustomer);
+            setDataSource('URL');
+            setLoading(false);
+            return; // Éxito, salir
+          } else {
+            console.error('❌ No se pudo decodificar los datos de la URL');
+          }
         }
 
-        console.log('✅ Cliente encontrado:', foundCustomer.name, foundCustomer.code);
-        setCustomer(foundCustomer);
-
-        // Cargar configuración de sellos
-        const savedStamps = localStorage.getItem('stampsPerReward');
-        if (savedStamps) {
-          setStampsPerReward(parseInt(savedStamps, 10));
-        }
-
+        // Si llegamos aquí, ninguna estrategia funcionó
+        console.error('❌ No se pudo cargar el cliente por ningún método');
+        setError(`Cliente no encontrado. Código: ${customerParam || 'N/A'}`);
         setLoading(false);
+
       } catch (err) {
         console.error('💥 Error al cargar cliente:', err);
         setError('Error al cargar los datos del cliente: ' + err.message);
