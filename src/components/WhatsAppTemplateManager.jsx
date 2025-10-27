@@ -186,10 +186,27 @@ Tienes {sellos} sellos acumulados. ¡Estás cerca de tu próximo premio!
     setIsCreating(false);
   };
 
+  const handleEditTemplate = (template) => {
+    // Permitir editar plantillas predeterminadas creando una copia personalizada
+    if (template.isDefault) {
+      const customTemplate = {
+        ...template,
+        id: `custom_${template.id}_${Date.now()}`,
+        name: `${template.name} (Personalizada)`,
+        isDefault: false
+      };
+      setEditingTemplate(customTemplate);
+      setIsCreating(true);
+    } else {
+      setEditingTemplate(template);
+      setIsCreating(false);
+    }
+  };
+
   const handleDeleteTemplate = (templateId) => {
     const template = templates.find(t => t.id === templateId);
     if (template?.isDefault) {
-      alert('No puedes eliminar plantillas predeterminadas');
+      alert('No puedes eliminar plantillas predeterminadas. Puedes crear una copia personalizada para modificarla.');
       return;
     }
 
@@ -465,25 +482,24 @@ Tienes {sellos} sellos acumulados. ¡Estás cerca de tu próximo premio!
                           <Copy className="w-3 h-3" />
                         )}
                       </Button>
+                      <Button
+                        onClick={() => handleEditTemplate(template)}
+                        variant="outline"
+                        size="sm"
+                        className="text-xs"
+                        title={template.isDefault ? "Crear copia personalizada" : "Editar plantilla"}
+                      >
+                        <Edit2 className="w-3 h-3" />
+                      </Button>
                       {!template.isDefault && (
-                        <>
-                          <Button
-                            onClick={() => setEditingTemplate(template)}
-                            variant="outline"
-                            size="sm"
-                            className="text-xs"
-                          >
-                            <Edit2 className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            onClick={() => handleDeleteTemplate(template.id)}
-                            variant="outline"
-                            size="sm"
-                            className="text-xs text-red-600 hover:bg-red-50"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </>
+                        <Button
+                          onClick={() => handleDeleteTemplate(template.id)}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
                       )}
                     </div>
                   </div>
