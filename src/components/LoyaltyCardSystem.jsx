@@ -1028,6 +1028,7 @@ const addCustomer = useCallback(async () => {
                             stamps: selectedCustomer?.stamps || 0,
                             stampsPerReward: stampsPerReward,
                             purchaseHistory: selectedCustomer?.purchaseHistory || [],
+                            customerCode: selectedCustomer?.code,
                             // baseUrl se resuelve automáticamente (env/global/origin)
                           }
                         )}

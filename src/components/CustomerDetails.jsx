@@ -91,7 +91,7 @@ const StampControls = React.memo(({
     const sellosFaltantes = stampsPerReward - currentStamps;
     const tienePremioPendiente = totalRewards > 0;
     const baseUrl = process.env.REACT_APP_PUBLIC_BASE_URL || window.location.origin;
-    const linkTarjeta = `${baseUrl}?customer=${encodeURIComponent(customer.id)}`;
+    const linkTarjeta = `${baseUrl}?customer=${encodeURIComponent(customer.code)}`;
     
     const ahora = new Date();
     const hora = ahora.getHours();
@@ -157,7 +157,8 @@ const StampControls = React.memo(({
           stamps: totalStamps,
           stampsPerReward: stampsPerReward,
           purchaseHistory: customer.purchaseHistory || [],
-          customMessage: finalMessage
+          customMessage: finalMessage,
+          customerCode: customer.code
         }
       );
       

@@ -172,7 +172,9 @@ export function enviarTarjetaPorWhatsApp(telefonoCliente, nombreCliente, idClien
       ref: 'wa'
     });
     
-    const linkTarjeta = `${base}?customer=${encodeURIComponent(idCliente)}&${linkParams.toString()}`;
+    // Usar customerCode si está disponible, sino usar idCliente como fallback
+    const customerIdentifier = opciones.customerCode || idCliente;
+    const linkTarjeta = `${base}?customer=${encodeURIComponent(customerIdentifier)}&${linkParams.toString()}`;
 
     // Datos del cliente para mensaje personalizado
     const sellosActuales = Number.isFinite(opciones.stamps) ? opciones.stamps : 0;
