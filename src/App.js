@@ -13,11 +13,16 @@ import PublicCustomerCard from './components/PublicCustomerCard';
 
 // Componente de la aplicación principal
 const App = () => {
+  // Configurar basename para GitHub Pages
+  const basename = process.env.NODE_ENV === 'production' 
+    ? '/Acril-Card-control' 
+    : '';
+
   return (
     <AuthProvider>
       <NotificationProvider>
         <CustomerProvider>
-          <Router>
+          <Router basename={basename}>
             <Routes>
               {/* Ruta pública para tarjeta de cliente - NO requiere autenticación */}
               <Route path="/card" element={<PublicCustomerCard />} />
