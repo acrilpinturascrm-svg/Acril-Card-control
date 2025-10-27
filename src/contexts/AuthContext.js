@@ -15,31 +15,8 @@ export const USER_ROLES = {
   EMPLOYEE: 'employee'
 };
 
-// Usuario por defecto para desarrollo con permisos granulares
-const DEFAULT_USERS = [
-  {
-    id: 'admin-1',
-    username: 'Acrilgroup',
-    password: 'ACRILCARD2025',
-    role: USER_ROLES.ADMIN,
-    name: 'Administrador',
-    email: 'admin@acrilcard.com',
-    permissions: ROLE_PERMISSIONS[USER_ROLES.ADMIN], // Todos los permisos
-    createdAt: new Date().toISOString(),
-    lastLogin: null
-  },
-  {
-    id: 'emp-1',
-    username: 'empleado',
-    password: 'empleado123',
-    role: USER_ROLES.EMPLOYEE,
-    name: 'Empleado Ventas',
-    email: 'ventas@acrilcard.com',
-    permissions: ROLE_PERMISSIONS[USER_ROLES.EMPLOYEE], // Permisos limitados
-    createdAt: new Date().toISOString(),
-    lastLogin: null
-  }
-];
+// Solo Google OAuth en producción - Sin credenciales hardcodeadas
+const DEFAULT_USERS = [];
 
 // Estado inicial
 const initialState = {

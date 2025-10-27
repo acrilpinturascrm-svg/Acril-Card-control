@@ -265,14 +265,6 @@ const LoginForm = () => {
             </p>
           </div>
 
-          {/* Credenciales de prueba */}
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <h3 className="font-medium text-yellow-800 mb-2">Credenciales de Prueba</h3>
-            <div className="text-sm text-yellow-700 space-y-1">
-              <div><strong>Admin:</strong> Acrilgroup / ACRILCARD2025</div>
-              <div><strong>Empleado:</strong> empleado / empleado123</div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
