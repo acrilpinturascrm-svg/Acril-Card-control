@@ -10,14 +10,15 @@ class GoogleAuthService {
     this.currentUser = null;
     
     // Configuración de Google OAuth
-    this.clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || '';
+    // Prioridad: 1) window.APP_CONFIG (runtime), 2) process.env (build time)
+    this.clientId = (window.APP_CONFIG?.googleClientId) || process.env.REACT_APP_GOOGLE_CLIENT_ID || '';
     this.scopes = [
       'https://www.googleapis.com/auth/userinfo.profile',
       'https://www.googleapis.com/auth/userinfo.email',
       'https://www.googleapis.com/auth/drive.file'
     ].join(' ');
     
-    this.redirectUri = window.location.origin;
+    this.redirectUri = (window.APP_CONFIG?.publicBaseUrl) || process.env.REACT_APP_PUBLIC_BASE_URL || window.location.origin;
   }
 
   /**
