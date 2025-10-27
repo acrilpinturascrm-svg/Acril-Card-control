@@ -271,6 +271,15 @@ const StampControls = React.memo(({
         customerPhone={customer.phone}
         message={whatsappMessage}
         onMessageChange={setWhatsappMessage}
+        customerData={{
+          customerName: customer.name,
+          businessName: localStorage.getItem('whatsapp_business_name') || 'ACRIL Pinturas',
+          totalStamps: totalStamps,
+          stampsPerReward: stampsPerReward,
+          currentStamps: currentStamps,
+          totalRewards: totalRewards,
+          link: `${process.env.REACT_APP_PUBLIC_BASE_URL || window.location.origin}/card?customer=${encodeURIComponent(customer.code)}`
+        }}
       />
     </div>
   );
