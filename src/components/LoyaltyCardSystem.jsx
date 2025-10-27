@@ -218,10 +218,13 @@ const LoyaltyCardSystem = ({
         setCustomers(customersData);
 
         const urlParams = new URLSearchParams(window.location.search);
-        const codeParam = urlParams.get('customer');
+        const customerParam = urlParams.get('customer');
 
-        if (codeParam) {
-          const foundCustomer = customersData.find(c => c.code === codeParam);
+        if (customerParam) {
+          // Buscar por código primero, luego por ID (retrocompatibilidad)
+          const foundCustomer = customersData.find(c => 
+            c.code === customerParam || c.id === customerParam
+          );
           if (foundCustomer) {
             setCurrentView('client');
             setClientViewCustomer(foundCustomer);
