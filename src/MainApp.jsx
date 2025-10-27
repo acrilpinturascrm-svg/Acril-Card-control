@@ -3,12 +3,11 @@ import { Routes, Route } from 'react-router-dom';
 import { useNotification } from './contexts/NotificationContext';
 import { useCustomers } from './contexts/CustomerContext';
 import Navigation from './components/common/Navigation';
-import { ProtectedRoute } from './components/ProtectedRoute';
 import LoyaltyCardSystem from './components/LoyaltyCardSystem';
 // import BackupFloatingAlert from './components/BackupFloatingAlert'; // DESHABILITADO
 import TestErrorHandling from './pages/TestErrorHandling';
 
-// Componente principal de la aplicación (protegido)
+// Componente principal de la aplicación (acceso público - login opcional para backup)
 const MainApp = () => {
   const [showMainPanel, setShowMainPanel] = useState(true);
   const [stampsPerReward, setStampsPerReward] = useState(() => {
@@ -170,23 +169,21 @@ const MainApp = () => {
       <main className="max-w-7xl mx-auto p-4 sm:px-6 lg:px-8 pt-6">
         <Routes>
           <Route path="/" element={showMainPanel ? (
-            <ProtectedRoute>
-              <LoyaltyCardSystem
-                customers={customers}
-                setCustomers={setCustomers}
-                stampsPerReward={stampsPerReward}
-                setStampsPerReward={setStampsPerReward}
-                prefixCandidates={prefixCandidates}
-                setPrefixCandidates={setPrefixCandidates}
-                showPrefixFixModal={showPrefixFixModal}
-                setShowPrefixFixModal={setShowPrefixFixModal}
-                onConfirmPrefixFixes={confirmPrefixFixes}
-                filterByStamps={filterByStamps}
-                setFilterByStamps={setFilterByStamps}
-                filterByDate={filterByDate}
-                setFilterByDate={setFilterByDate}
-              />
-            </ProtectedRoute>
+            <LoyaltyCardSystem
+              customers={customers}
+              setCustomers={setCustomers}
+              stampsPerReward={stampsPerReward}
+              setStampsPerReward={setStampsPerReward}
+              prefixCandidates={prefixCandidates}
+              setPrefixCandidates={setPrefixCandidates}
+              showPrefixFixModal={showPrefixFixModal}
+              setShowPrefixFixModal={setShowPrefixFixModal}
+              onConfirmPrefixFixes={confirmPrefixFixes}
+              filterByStamps={filterByStamps}
+              setFilterByStamps={setFilterByStamps}
+              filterByDate={filterByDate}
+              setFilterByDate={setFilterByDate}
+            />
           ) : (
             <div className="flex flex-col items-center justify-center h-96 bg-white rounded-lg shadow-md p-6">
               <h2 className="text-2xl font-bold text-gray-800 mb-4">Panel de Salida</h2>
@@ -201,11 +198,7 @@ const MainApp = () => {
               </button>
             </div>
           )} />
-          <Route path="/test-errors" element={
-            <ProtectedRoute requiredRole="admin">
-              <TestErrorHandling />
-            </ProtectedRoute>
-          } />
+          <Route path="/test-errors" element={<TestErrorHandling />} />
         </Routes>
       </main>
     </div>
