@@ -127,7 +127,14 @@ export function enviarTarjetaPorWhatsApp(telefonoCliente, nombreCliente, idClien
       }
       
       if (targetUrl) {
-        const opened = window.open(targetUrl, '_blank', 'noopener,noreferrer');
+        // Reutilizar la misma pestaña de WhatsApp si ya existe
+        const opened = window.open(targetUrl, 'whatsapp_window', 'noopener,noreferrer');
+        
+        // Enfocar la ventana si ya estaba abierta
+        if (opened) {
+          opened.focus();
+        }
+        
         return opened && !opened.closed;
       }
       return false;
@@ -304,9 +311,16 @@ export function enviarTarjetaPorWhatsApp(telefonoCliente, nombreCliente, idClien
       targetUrl = `https://api.whatsapp.com/send?phone=${encodeURIComponent(numeroWhatsApp)}&text=${encodeURIComponent(mensaje)}`;
     }
 
-    // Abrir WhatsApp en nueva pestaña
+    // Abrir WhatsApp reutilizando la misma pestaña si ya existe
+    // Usar nombre específico 'whatsapp_window' en lugar de '_blank'
+    // Esto hace que el navegador reutilice la pestaña existente
     if (targetUrl) {
-      const opened = window.open(targetUrl, '_blank', 'noopener,noreferrer');
+      const opened = window.open(targetUrl, 'whatsapp_window', 'noopener,noreferrer');
+      
+      // Enfocar la ventana si ya estaba abierta
+      if (opened) {
+        opened.focus();
+      }
       
       // Verificar si se abrió correctamente
       if (!opened || opened.closed || typeof opened.closed === 'undefined') {
