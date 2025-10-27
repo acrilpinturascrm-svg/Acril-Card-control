@@ -124,7 +124,8 @@ const WhatsAppPreviewModal = ({
     // Registrar uso de la plantilla
     trackTemplateUsage(template.id);
     setShowTemplates(false);
-    setIsEditing(false);
+    // Activar modo de edición automáticamente para permitir modificaciones
+    setIsEditing(true);
   };
 
   const formatPhoneDisplay = (phone) => {
