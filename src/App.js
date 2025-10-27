@@ -27,7 +27,7 @@ const App = () => {
               {/* Ruta pública para tarjeta de cliente - NO requiere autenticación */}
               <Route path="/card" element={<PublicCustomerCard />} />
               
-              {/* Todas las rutas son públicas - Login opcional solo para backup */}
+              {/* Rutas protegidas */}
               <Route path="/login" element={<LoginForm />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/advanced-reports" element={<AdvancedReports />} />
