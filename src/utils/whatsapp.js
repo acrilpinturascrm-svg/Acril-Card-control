@@ -15,6 +15,9 @@
 
 import { encodeCustomerData } from './customerDataEncoder.js';
 
+// Referencia global para la ventana de WhatsApp
+let whatsappWindow = null;
+
 // Configuración de países soportados
 const COUNTRY_CONFIGS = {
   VE: { code: '58', name: 'Venezuela', phoneLength: 10 },
@@ -127,16 +130,21 @@ export function enviarTarjetaPorWhatsApp(telefonoCliente, nombreCliente, idClien
       }
       
       if (targetUrl) {
-        // Reutilizar la misma pestaña de WhatsApp si ya existe
-        // Removemos 'noopener,noreferrer' para permitir que focus() funcione correctamente
-        const opened = window.open(targetUrl, 'whatsapp_window');
-        
-        // Enfocar la ventana si ya estaba abierta
-        if (opened) {
-          opened.focus();
+        // Verificar si la ventana anterior sigue abierta
+        if (whatsappWindow && !whatsappWindow.closed) {
+          // Reutilizar la ventana existente
+          whatsappWindow.location.href = targetUrl;
+          whatsappWindow.focus();
+          return true;
+        } else {
+          // Abrir nueva ventana y guardar referencia
+          whatsappWindow = window.open(targetUrl, 'whatsapp_window');
+          
+          if (whatsappWindow) {
+            whatsappWindow.focus();
+            return true;
+          }
         }
-        
-        return opened && !opened.closed;
       }
       return false;
     }
@@ -313,19 +321,24 @@ export function enviarTarjetaPorWhatsApp(telefonoCliente, nombreCliente, idClien
     }
 
     // Abrir WhatsApp reutilizando la misma pestaña si ya existe
-    // Usar nombre específico 'whatsapp_window' en lugar de '_blank'
-    // Esto hace que el navegador reutilice la pestaña existente
-    // Removemos 'noopener,noreferrer' para permitir que focus() funcione correctamente
     if (targetUrl) {
-      const opened = window.open(targetUrl, 'whatsapp_window');
-      
-      // Enfocar la ventana si ya estaba abierta
-      if (opened) {
-        opened.focus();
+      // Verificar si la ventana anterior sigue abierta
+      if (whatsappWindow && !whatsappWindow.closed) {
+        // Reutilizar la ventana existente
+        whatsappWindow.location.href = targetUrl;
+        whatsappWindow.focus();
+        return true;
+      } else {
+        // Abrir nueva ventana y guardar referencia
+        whatsappWindow = window.open(targetUrl, 'whatsapp_window');
+        
+        if (whatsappWindow) {
+          whatsappWindow.focus();
+        }
       }
       
       // Verificar si se abrió correctamente
-      if (!opened || opened.closed || typeof opened.closed === 'undefined') {
+      if (!whatsappWindow || whatsappWindow.closed || typeof whatsappWindow.closed === 'undefined') {
         // Si no se pudo abrir (bloqueador de pop-ups), mostrar opciones al usuario
         const userChoice = confirm(
           '⚠️ No se pudo abrir WhatsApp en una nueva pestaña.\n\n' +
