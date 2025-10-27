@@ -20,6 +20,8 @@ const PublicCustomerCard = () => {
         // Obtener parámetro customer de la URL
         const customerParam = searchParams.get('customer');
         
+        console.log('🔍 Buscando cliente con parámetro:', customerParam);
+        
         if (!customerParam) {
           setError('No se especificó un cliente en el enlace.');
           setLoading(false);
@@ -29,24 +31,32 @@ const PublicCustomerCard = () => {
         // Cargar clientes desde localStorage
         const stored = localStorage.getItem('customers');
         if (!stored) {
-          setError('No se encontraron datos de clientes.');
+          console.error('❌ No hay datos en localStorage');
+          setError('No se encontraron datos de clientes. Asegúrate de que la aplicación tenga clientes registrados.');
           setLoading(false);
           return;
         }
 
         const customers = JSON.parse(stored);
+        console.log('📋 Total de clientes en localStorage:', customers.length);
         
         // Buscar cliente por código o ID
-        const foundCustomer = customers.find(c => 
-          c.code === customerParam || c.id === customerParam
-        );
+        const foundCustomer = customers.find(c => {
+          const matchCode = c.code === customerParam;
+          const matchId = c.id === customerParam;
+          console.log(`Comparando: ${c.code} === ${customerParam} (${matchCode}) || ${c.id} === ${customerParam} (${matchId})`);
+          return matchCode || matchId;
+        });
 
         if (!foundCustomer) {
-          setError('Cliente no encontrado. Verifica el enlace.');
+          console.error('❌ Cliente no encontrado. Parámetro:', customerParam);
+          console.log('Códigos disponibles:', customers.map(c => c.code).join(', '));
+          setError(`Cliente no encontrado. Código buscado: ${customerParam}`);
           setLoading(false);
           return;
         }
 
+        console.log('✅ Cliente encontrado:', foundCustomer.name, foundCustomer.code);
         setCustomer(foundCustomer);
 
         // Cargar configuración de sellos
@@ -57,8 +67,8 @@ const PublicCustomerCard = () => {
 
         setLoading(false);
       } catch (err) {
-        console.error('Error al cargar cliente:', err);
-        setError('Error al cargar los datos del cliente.');
+        console.error('💥 Error al cargar cliente:', err);
+        setError('Error al cargar los datos del cliente: ' + err.message);
         setLoading(false);
       }
     };
