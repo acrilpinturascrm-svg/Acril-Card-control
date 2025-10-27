@@ -55,7 +55,7 @@ export const useAutoBackup = () => {
             
             // Verificar si la sesión no ha expirado (1 hora)
             if (Date.now() < sessionData.expiresAt) {
-              console.log('🔄 Restaurando sesión previa de Google Drive...');
+              console.debug('🔄 Restaurando sesión previa de Google Drive...');
               await initializeGoogleDrive();
               return;
             } else {
@@ -65,7 +65,7 @@ export const useAutoBackup = () => {
           }
 
           // Inicializar Google Drive (aunque no esté autenticado)
-          console.log('🔄 Inicializando Google Drive API...');
+          console.debug('🔄 Inicializando Google Drive API...');
           await initializeGoogleDrive();
           
         } catch (error) {
@@ -234,7 +234,7 @@ export const useAutoBackup = () => {
 
       // Inicializar Google Drive si no está inicializado
       if (!googleDriveState.isInitialized) {
-        console.log('🔄 Inicializando Google Drive antes de subir backup...');
+        console.debug('🔄 Inicializando Google Drive antes de subir backup...');
         try {
           await initializeGoogleDrive();
         } catch (initError) {
@@ -248,7 +248,7 @@ export const useAutoBackup = () => {
       }
 
       // Subir backup
-      console.log('📤 Subiendo backup a Google Drive...');
+      console.debug('📤 Subiendo backup a Google Drive...');
       const result = await googleDriveService.uploadBackup(backupId, backupData);
       
       setGoogleDriveState(prev => ({ ...prev, isLoading: false }));
@@ -272,11 +272,11 @@ export const useAutoBackup = () => {
       setGoogleDriveState(prev => ({ ...prev, isLoading: true, error: null }));
 
       if (!googleDriveState.isInitialized) {
-        console.log('🔄 Inicializando Google Drive antes de autenticar...');
+        console.debug('🔄 Inicializando Google Drive antes de autenticar...');
         await initializeGoogleDrive();
       }
 
-      console.log('🔐 Iniciando proceso de autenticación...');
+      console.debug('🔐 Iniciando proceso de autenticación...');
       const userInfo = await googleDriveService.signIn();
 
       // Guardar sesión para persistencia entre navegadores
@@ -317,7 +317,7 @@ export const useAutoBackup = () => {
       }
       
       // No lanzar el error para evitar que se propague
-      console.log('ℹ️ Autenticación no completada:', errorMessage);
+      console.debug('ℹ️ Autenticación no completada:', errorMessage);
     }
   }, [googleDriveState.isInitialized, initializeGoogleDrive, showSuccess, showError]);
 

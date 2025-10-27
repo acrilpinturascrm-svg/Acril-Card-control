@@ -116,24 +116,24 @@ const BackupFloatingAlert = () => {
           {/* Backup Google Drive */}
           <button
             onClick={() => handleQuickBackup('google-drive')}
-            disabled={!googleDriveState.isAuthenticated}
+            disabled={!googleDriveState.isSignedIn}
             className={`w-full flex items-center space-x-3 p-3 border rounded-lg transition-colors ${
-              googleDriveState.isAuthenticated
+              googleDriveState.isSignedIn
                 ? 'border-gray-200 hover:bg-gray-50'
                 : 'border-gray-100 bg-gray-50 cursor-not-allowed'
             }`}
           >
             <Cloud className={`w-5 h-5 ${
-              googleDriveState.isAuthenticated ? 'text-blue-600' : 'text-gray-400'
+              googleDriveState.isSignedIn ? 'text-blue-600' : 'text-gray-400'
             }`} />
             <div className="text-left">
               <div className={`font-medium ${
-                googleDriveState.isAuthenticated ? 'text-gray-900' : 'text-gray-400'
+                googleDriveState.isSignedIn ? 'text-gray-900' : 'text-gray-400'
               }`}>
                 Backup Google Drive
               </div>
               <div className="text-sm text-gray-500">
-                {googleDriveState.isAuthenticated 
+                {googleDriveState.isSignedIn 
                   ? 'Guardar en la nube' 
                   : 'Requiere autenticación'
                 }
