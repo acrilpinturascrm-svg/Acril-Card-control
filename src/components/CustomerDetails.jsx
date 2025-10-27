@@ -91,7 +91,7 @@ const StampControls = React.memo(({
     const sellosFaltantes = stampsPerReward - currentStamps;
     const tienePremioPendiente = totalRewards > 0;
     const baseUrl = process.env.REACT_APP_PUBLIC_BASE_URL || window.location.origin;
-    const linkTarjeta = `${baseUrl}?customer=${encodeURIComponent(customer.code)}`;
+    const linkTarjeta = `${baseUrl}/card?customer=${encodeURIComponent(customer.code)}`;
     
     const ahora = new Date();
     const hora = ahora.getHours();
@@ -192,8 +192,8 @@ const StampControls = React.memo(({
 
   const handleCopyLink = useCallback(async () => {
     try {
-      const baseUrl = window.location.origin + window.location.pathname;
-      const link = `${baseUrl}?customer=${customer.code}`;
+      const baseUrl = process.env.REACT_APP_PUBLIC_BASE_URL || window.location.origin;
+      const link = `${baseUrl}/card?customer=${customer.code}`;
       await navigator.clipboard.writeText(link);
     } catch (error) {
       console.error('Error copying link:', error);

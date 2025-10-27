@@ -726,8 +726,8 @@ const addCustomer = useCallback(async () => {
 
   const copyCustomerLink = useCallback(async (customerCode) => {
     try {
-      const baseUrl = window.location.origin + window.location.pathname;
-      const link = `${baseUrl}?customer=${customerCode}`;
+      const baseUrl = process.env.REACT_APP_PUBLIC_BASE_URL || window.location.origin;
+      const link = `${baseUrl}/card?customer=${customerCode}`;
       await navigator.clipboard.writeText(link);
       showSuccess('Enlace copiado al portapapeles');
     } catch (error) {

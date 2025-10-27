@@ -9,6 +9,7 @@ import Reports from './components/Reports';
 import AdvancedReports from './components/AdvancedReports';
 import Analytics from './components/Analytics';
 import Settings from './components/Settings';
+import PublicCustomerCard from './components/PublicCustomerCard';
 
 // Componente de la aplicación principal
 const App = () => {
@@ -18,6 +19,10 @@ const App = () => {
         <CustomerProvider>
           <Router>
             <Routes>
+              {/* Ruta pública para tarjeta de cliente - NO requiere autenticación */}
+              <Route path="/card" element={<PublicCustomerCard />} />
+              
+              {/* Rutas protegidas */}
               <Route path="/login" element={<LoginForm />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/advanced-reports" element={<AdvancedReports />} />

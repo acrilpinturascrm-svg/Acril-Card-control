@@ -174,7 +174,8 @@ export function enviarTarjetaPorWhatsApp(telefonoCliente, nombreCliente, idClien
     
     // Usar customerCode si está disponible, sino usar idCliente como fallback
     const customerIdentifier = opciones.customerCode || idCliente;
-    const linkTarjeta = `${base}?customer=${encodeURIComponent(customerIdentifier)}&${linkParams.toString()}`;
+    // Usar ruta /card para vista pública (no requiere autenticación)
+    const linkTarjeta = `${base}/card?customer=${encodeURIComponent(customerIdentifier)}&${linkParams.toString()}`;
 
     // Datos del cliente para mensaje personalizado
     const sellosActuales = Number.isFinite(opciones.stamps) ? opciones.stamps : 0;
