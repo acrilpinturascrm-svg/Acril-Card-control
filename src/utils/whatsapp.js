@@ -13,6 +13,8 @@
  * 5) window.location.origin (fallback para desarrollo local)
  */
 
+import { encodeCustomerData } from './customerDataEncoder.js';
+
 // Configuración de países soportados
 const COUNTRY_CONFIGS = {
   VE: { code: '58', name: 'Venezuela', phoneLength: 10 },
@@ -164,21 +166,28 @@ export function enviarTarjetaPorWhatsApp(telefonoCliente, nombreCliente, idClien
       if (!shouldContinue) return false;
     }
 
-    // Construir datos del cliente para codificar en URL (sistema híbrido)
+    // Construir datos del cliente para codificar en URL (sistema híbrido optimizado)
+    // Solo datos esenciales: nombre, código y sellos (sin historial)
     const customerData = {
       name: nombreCliente,
       code: opciones.customerCode || idCliente,
-      stamps: opciones.stamps || 0,
-      purchaseHistory: (opciones.purchaseHistory || []).slice(-5) // Solo últimas 5
+      stamps: opciones.stamps || 0
+      // Historial eliminado para URLs más cortas
     };
     
-    // Codificar datos en base64
+    // Codificar datos con compresión usando función importada
     let encodedData = '';
     try {
-      const jsonString = JSON.stringify(customerData);
-      encodedData = btoa(encodeURIComponent(jsonString));
+      encodedData = encodeCustomerData(customerData);
     } catch (error) {
       console.warn('No se pudieron codificar datos del cliente:', error);
+      // Fallback: codificación simple sin compresión
+      try {
+        const jsonString = JSON.stringify(customerData);
+        encodedData = btoa(encodeURIComponent(jsonString));
+      } catch (fallbackError) {
+        console.error('Error en fallback de codificación:', fallbackError);
+      }
     }
     
     // Construir link público con parámetros adicionales para mejor tracking
