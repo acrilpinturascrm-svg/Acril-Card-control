@@ -8,43 +8,8 @@ import {
   getTemplateStats 
 } from '../utils/templateVariables';
 
-/**
- * Gestor de plantillas de WhatsApp - Versión Mejorada
- * Incluye: categorización, vista previa, validación y estadísticas
- */
-const WhatsAppTemplateManager = ({ onTemplateSelect }) => {
-  const [templates, setTemplates] = useState([]);
-  const [editingTemplate, setEditingTemplate] = useState(null);
-  const [isCreating, setIsCreating] = useState(false);
-  const [copiedId, setCopiedId] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [showStats, setShowStats] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
-  const [previewTemplate, setPreviewTemplate] = useState(null);
-
-  // Datos de ejemplo para vista previa
-  const previewData = {
-    customerName: 'Juan Pérez',
-    businessName: 'ACRIL Pinturas',
-    totalStamps: 17,
-    stampsPerReward: 10,
-    currentStamps: 7,
-    totalRewards: 1,
-    link: 'https://acrilcard.netlify.app/card?customer=CLI-001'
-  };
-
-  // Categorías de plantillas
-  const categories = [
-    { id: 'all', name: 'Todas', icon: '📋' },
-    { id: 'welcome', name: 'Bienvenida', icon: '👋' },
-    { id: 'purchase', name: 'Compra', icon: '🛍️' },
-    { id: 'reward', name: 'Premio', icon: '🎁' },
-    { id: 'reminder', name: 'Recordatorio', icon: '⏰' },
-    { id: 'custom', name: 'Personalizado', icon: '✨' }
-  ];
-
-  // Plantillas por defecto con categorías
-  const defaultTemplates = [
+// Plantillas por defecto con categorías (fuera del componente para evitar recreación)
+const defaultTemplates = [
     {
       id: 'welcome',
       name: 'Bienvenida',
@@ -124,6 +89,41 @@ Tienes {sellos} sellos acumulados. ¡Estás cerca de tu próximo premio!
 ¡Esperamos verte pronto! 🎉`,
       isDefault: true
     }
+  ];
+
+/**
+ * Gestor de plantillas de WhatsApp - Versión Mejorada
+ * Incluye: categorización, vista previa, validación y estadísticas
+ */
+const WhatsAppTemplateManager = ({ onTemplateSelect }) => {
+  const [templates, setTemplates] = useState([]);
+  const [editingTemplate, setEditingTemplate] = useState(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [showStats, setShowStats] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewTemplate, setPreviewTemplate] = useState(null);
+
+  // Datos de ejemplo para vista previa
+  const previewData = {
+    customerName: 'Juan Pérez',
+    businessName: 'ACRIL Pinturas',
+    totalStamps: 17,
+    stampsPerReward: 10,
+    currentStamps: 7,
+    totalRewards: 1,
+    link: 'https://acrilcard.netlify.app/card?customer=CLI-001'
+  };
+
+  // Categorías de plantillas
+  const categories = [
+    { id: 'all', name: 'Todas', icon: '📋' },
+    { id: 'welcome', name: 'Bienvenida', icon: '👋' },
+    { id: 'purchase', name: 'Compra', icon: '🛍️' },
+    { id: 'reward', name: 'Premio', icon: '🎁' },
+    { id: 'reminder', name: 'Recordatorio', icon: '⏰' },
+    { id: 'custom', name: 'Personalizado', icon: '✨' }
   ];
 
   // Cargar plantillas del localStorage
