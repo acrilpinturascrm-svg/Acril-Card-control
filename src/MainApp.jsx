@@ -5,7 +5,6 @@ import { useCustomers } from './contexts/CustomerContext';
 import Navigation from './components/common/Navigation';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import LoyaltyCardSystem from './components/LoyaltyCardSystem';
-import BackupFloatingAlert from './components/BackupFloatingAlert';
 import TestErrorHandling from './pages/TestErrorHandling';
 
 // Componente principal de la aplicación (protegido)
@@ -131,9 +130,6 @@ const MainApp = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Alerta flotante de backup */}
-      <BackupFloatingAlert />
-      
       <Navigation
         onExit={setShowMainPanel}
         showMainPanel={showMainPanel}

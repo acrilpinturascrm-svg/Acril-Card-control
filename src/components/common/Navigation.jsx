@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Gift, RefreshCw, Download, LogOut, User, Settings, BarChart3, Users, FileText, Save, Shield, Database } from 'lucide-react';
 import { useAuth, USER_ROLES } from '../../contexts/AuthContext';
 import { Button, DropdownMenu, UserInfo } from './';
-import BackupManager from '../BackupManager';
 
 const Navigation = ({
   onExit,
@@ -31,8 +30,6 @@ const Navigation = ({
     PERMISSIONS
   } = useAuth();
 
-  // Estado para mostrar/ocultar BackupManager
-  const [showBackupManager, setShowBackupManager] = useState(false);
   const navigate = useNavigate();
 
   // Mostrar información del usuario si está autenticado
@@ -101,19 +98,6 @@ const Navigation = ({
                           >
                             <RefreshCw size={16} className="mr-2" />
                             Corregir prefijos
-                          </Button>
-                        )}
-
-                        {/* Sistema de Backup */}
-                        {canHandleData() && (
-                          <Button
-                            onClick={() => setShowBackupManager(!showBackupManager)}
-                            variant="ghost"
-                            size="sm"
-                            className="text-gray-700 hover:bg-gray-100 text-sm w-full justify-start"
-                          >
-                            <Save size={16} className="mr-2" />
-                            Sistema de Backup
                           </Button>
                         )}
 
@@ -210,31 +194,6 @@ const Navigation = ({
           </div>
         </div>
       </nav>
-
-      {/* Modal del Sistema de Backup */}
-      {showBackupManager && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="text-xl font-bold text-gray-800 flex items-center">
-                <Shield className="w-6 h-6 mr-2 text-blue-600" />
-                Sistema de Backup Avanzado
-              </h2>
-              <Button
-                onClick={() => setShowBackupManager(false)}
-                variant="ghost"
-                size="sm"
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ✕
-              </Button>
-            </div>
-            <div className="p-6">
-              <BackupManager />
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };

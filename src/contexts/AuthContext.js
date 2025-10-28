@@ -7,7 +7,6 @@ import {
   getRolePermissionStats
 } from '../utils/permissions.simple';
 import { PermissionMiddleware, PermissionValidators, SecurityValidators } from '../utils/permissionMiddleware';
-import googleAuthService from '../services/googleAuth';
 
 // Definir USER_ROLES localmente para evitar problemas de importación
 export const USER_ROLES = {
@@ -142,50 +141,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Función de login con Google
-  const loginWithGoogle = useCallback(async () => {
-    try {
-      setState(prev => ({ ...prev, isLoading: true }));
-
-      // Inicializar y autenticar con Google
-      const googleUser = await googleAuthService.signIn();
-
-      // Crear usuario con permisos de admin (puedes ajustar según necesites)
-      const user = {
-        id: `google-${googleUser.id}`,
-        username: googleUser.email,
-        email: googleUser.email,
-        name: googleUser.name,
-        picture: googleUser.picture,
-        role: USER_ROLES.ADMIN, // Por defecto admin para usuarios de Google
-        permissions: ROLE_PERMISSIONS[USER_ROLES.ADMIN],
-        authProvider: 'google',
-        createdAt: new Date().toISOString(),
-        lastLogin: new Date().toISOString()
-      };
-
-      // Guardar en localStorage
-      localStorage.setItem('acrilcard_user', JSON.stringify(user));
-
-      // Actualizar estado
-      setState({
-        user,
-        isAuthenticated: true,
-        isLoading: false,
-        role: user.role,
-        permissions: user.permissions,
-        loginAttempts: 0,
-        lastActivity: new Date().toISOString()
-      });
-
-      return { success: true, user };
-    } catch (error) {
-      console.error('Error en login con Google:', error);
-      setState(prev => ({ ...prev, isLoading: false }));
-      return { success: false, error: error.message || 'Error al iniciar sesión con Google' };
-    }
-  }, []);
-
   // Función de logout
   const logout = useCallback(async () => {
     try {
@@ -193,9 +148,7 @@ export const AuthProvider = ({ children }) => {
       const savedUser = localStorage.getItem('acrilcard_user');
       if (savedUser) {
         const user = JSON.parse(savedUser);
-        if (user.authProvider === 'google') {
-          await googleAuthService.signOut();
-        }
+        // Usuario cerrado de sesión
       }
 
       localStorage.removeItem('acrilcard_user');
@@ -428,7 +381,6 @@ export const AuthProvider = ({ children }) => {
 
     // Acciones básicas
     login,
-    loginWithGoogle,
     logout,
 
     // Sistema de permisos granular
