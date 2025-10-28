@@ -6,7 +6,7 @@ import { useNotification } from '../contexts/NotificationContext';
 import { generateCustomerCode, digitsOnly } from '../utils/logic';
 
 const CustomerForm = () => {
-  const { addCustomer, loading } = useCustomers();
+  const { addCustomer, loading, customers } = useCustomers();
   const { showSuccess, showError } = useNotification();
 
   const [formData, setFormData] = useState({
@@ -70,16 +70,20 @@ const CustomerForm = () => {
   // Manejar envío del formulario
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
+    console.log('🔍 DEBUG handleSubmit - Formulario enviado');
+    console.log('🔍 DEBUG formData:', formData);
 
     const validationErrors = validateForm(formData);
+    console.log('🔍 DEBUG validationErrors:', validationErrors);
+    
     if (Object.keys(validationErrors).length > 0) {
+      console.log('❌ Formulario tiene errores de validación');
       setErrors(validationErrors);
       return;
     }
 
     try {
       // Verificar si ya existe un cliente con la misma cédula
-      const { customers } = useCustomers();
       const duplicate = customers.find(
         c => c.idType === formData.idType && c.idNumber === formData.idNumber
       );
@@ -131,7 +135,7 @@ const CustomerForm = () => {
       console.error('Error adding customer:', error);
       showError('Error al agregar cliente');
     }
-  }, [formData, validateForm, addCustomer, showSuccess, showError]);
+  }, [formData, validateForm, addCustomer, showSuccess, showError, customers]);
 
   // Generar preview del código
   const previewCode = React.useMemo(() => {
@@ -140,7 +144,6 @@ const CustomerForm = () => {
     }
 
     try {
-      const { customers } = useCustomers();
       return generateCustomerCode(
         formData.idType,
         formData.idNumber,
@@ -150,7 +153,7 @@ const CustomerForm = () => {
     } catch {
       return '';
     }
-  }, [formData]);
+  }, [formData, customers]);
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">

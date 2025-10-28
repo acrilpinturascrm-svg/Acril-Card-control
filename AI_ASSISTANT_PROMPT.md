@@ -1,15 +1,19 @@
 # AI Assistant Prompt - ACRILCARD Project
 
 ## Contexto del Proyecto
-Sistema empresarial de fidelización de clientes desarrollado con React 18, TailwindCSS y Material-UI. Incluye autenticación con roles granulares, backup en Google Drive, PWA completa y sistema de reportes avanzados.
+Sistema empresarial de fidelización de clientes desarrollado con React 18, TailwindCSS y Material-UI. Incluye autenticación con roles granulares, **backend en Supabase (PostgreSQL)**, PWA completa y sistema de reportes avanzados.
+
+**Última migración:** 28 de Octubre, 2025 - Migrado de Google Drive a Supabase como backend principal.
 
 ## Stack Tecnológico
 - React 18.2.0 + React Router 6.28.5
 - TailwindCSS + Material-UI
 - Context API para estado global
-- Google Drive API para backups
+- **Supabase (PostgreSQL)** - Backend y base de datos
+- **@supabase/supabase-js** - Cliente de Supabase
 - Lucide React para iconos
 - PWA con Service Workers
+- LocalStorage como fallback cuando Supabase no está disponible
 
 ## Principios de Desarrollo
 
@@ -33,10 +37,11 @@ Sistema empresarial de fidelización de clientes desarrollado con React 18, Tail
 - **Comentarios**: Solo cuando la lógica no es obvia
 
 ### 4. Gestión de Estado
-- **CustomerContext**: Para operaciones CRUD de clientes
+- **CustomerContext**: Para operaciones CRUD de clientes (conectado a Supabase)
 - **AuthContext**: Para autenticación y permisos
 - **NotificationContext**: Para mensajes al usuario
-- **LocalStorage**: Persistencia automática de datos críticos
+- **Supabase**: Persistencia principal en PostgreSQL
+- **LocalStorage**: Fallback automático cuando Supabase no está disponible
 
 ### 5. UI/UX
 - **TailwindCSS**: Clases utility-first para estilos
@@ -62,11 +67,12 @@ Sistema empresarial de fidelización de clientes desarrollado con React 18, Tail
 - **Coverage**: Mínimo 70% en componentes críticos
 - **Tests de integración**: Para flujos completos
 
-### 9. Backup y Persistencia
-- **Auto-backup**: Cada 24 horas por defecto
-- **Google Drive**: Integración completa con OAuth
-- **LocalStorage**: Backup local automático
-- **Versionado**: Timestamps en nombres de archivos
+### 9. Base de Datos y Persistencia
+- **Supabase (PostgreSQL)**: Base de datos principal en la nube
+- **Backups automáticos**: Supabase realiza backups diarios automáticamente
+- **LocalStorage**: Fallback cuando Supabase no está disponible
+- **Sincronización**: Datos sincronizados entre dispositivos vía Supabase
+- **Esquema**: Definido en `SUPABASE_SCHEMA_SIMPLE.sql`
 
 ### 10. Seguridad
 - **Validación de entrada**: Sanitizar todos los inputs
@@ -80,16 +86,36 @@ Sistema empresarial de fidelización de clientes desarrollado con React 18, Tail
 src/
 ├── components/          # Componentes de UI
 │   ├── common/         # Componentes reutilizables
-│   └── [Feature].jsx   # Componentes específicos
+│   │   └── index.js    # Exporta EnhancedCustomerForm, Button, etc.
+│   ├── EnhancedCustomerForm.jsx  # ⚠️ Formulario REAL usado (no CustomerForm.jsx)
+│   ├── CustomerForm.jsx          # ⚠️ NO se usa (legacy)
+│   ├── LoyaltyCardSystem.jsx     # Componente principal del sistema
+│   └── [Feature].jsx             # Componentes específicos
 ├── contexts/           # Context API providers
+│   ├── CustomerContext.js    # Conectado a Supabase
+│   ├── AuthContext.js
+│   └── NotificationContext.js
 ├── hooks/              # Custom hooks
-├── services/           # Servicios externos (Google Drive, etc.)
+├── services/           # Servicios externos
+│   ├── supabaseClient.js     # Cliente de Supabase
+│   ├── customersService.js   # CRUD de clientes
+│   └── [otros servicios]
 ├── utils/              # Utilidades y helpers
 ├── pages/              # Páginas completas
 ├── App.js              # Router principal
 ├── MainApp.jsx         # App protegida
 └── index.js            # Entry point
 ```
+
+### ⚠️ Componentes Importantes a Conocer
+
+**EnhancedCustomerForm.jsx** es el formulario REAL usado en producción, NO `CustomerForm.jsx`.
+
+Cuando modifiques el formulario de clientes, siempre edita:
+- `src/components/EnhancedCustomerForm.jsx` ✅
+- `src/components/LoyaltyCardSystem.jsx` (para el `onSave`) ✅
+
+NO edites `CustomerForm.jsx` ya que no se usa.
 
 ## Flujo de Trabajo
 
@@ -107,10 +133,86 @@ src/
 5. **Exportar**: Named export + default export
 
 ### Al Modificar Estado
-1. **Context primero**: Usar contextos existentes
-2. **LocalStorage**: Persistir cambios críticos
-3. **Notificaciones**: Feedback al usuario
-4. **Validación**: Antes de actualizar estado
+1. **Context primero**: SIEMPRE usar funciones del contexto (`addCustomer`, `updateCustomer`, `deleteCustomer`)
+2. **NUNCA bypass el contexto**: No guardar directamente en localStorage o Supabase
+3. **Supabase automático**: El contexto maneja Supabase automáticamente
+4. **Notificaciones**: Feedback al usuario con NotificationContext
+5. **Validación**: Antes de actualizar estado
+
+### ⚠️ IMPORTANTE: Flujo Correcto de Datos
+
+**✅ CORRECTO:**
+```javascript
+// En LoyaltyCardSystem.jsx o cualquier componente
+const { addCustomer } = useCustomers();
+
+const handleSave = async (customerData) => {
+  const created = await addCustomer(customerData);
+  // addCustomer maneja Supabase automáticamente
+};
+```
+
+**❌ INCORRECTO (NO HACER):**
+```javascript
+// ❌ NO guardar directamente en localStorage
+setCustomers(prev => {
+  const updated = [...prev, newCustomer];
+  localStorage.setItem('customers', JSON.stringify(updated));
+  return updated;
+});
+
+// ❌ NO llamar directamente a customersService
+const created = await customersService.createCustomer(data);
+```
+
+**Flujo correcto:**
+```
+Componente → useCustomers() → CustomerContext → customersService → Supabase
+```
+
+### 📋 Funciones CRUD Correctas (Referencia Rápida)
+
+**SIEMPRE usar estas funciones del contexto:**
+
+```javascript
+// En cualquier componente
+const { 
+  addCustomer,      // Crear cliente
+  updateCustomer,   // Actualizar cliente
+  deleteCustomer,   // Eliminar cliente
+  customers,        // Lista de clientes
+  loading           // Estado de carga
+} = useCustomers();
+
+// Si hay conflicto de nombres, usar alias:
+const { 
+  addCustomer: addCustomerFromContext,
+  deleteCustomer: deleteCustomerFromContext 
+} = useCustomers();
+```
+
+**✅ CORRECTO - Crear Cliente:**
+```javascript
+const handleCreate = async (data) => {
+  const created = await addCustomer(data);
+  // Cliente guardado en Supabase automáticamente
+};
+```
+
+**❌ INCORRECTO - NO HACER:**
+```javascript
+// ❌ NO guardar directamente en localStorage
+setCustomers([...customers, newCustomer]);
+localStorage.setItem('customers', JSON.stringify(customers));
+
+// ❌ NO llamar directamente al servicio
+await customersService.createCustomer(data);
+```
+
+**Archivos Críticos:**
+- `src/contexts/CustomerContext.js` - Funciones del contexto
+- `src/services/customersService.js` - Servicio de Supabase
+- `src/components/LoyaltyCardSystem.jsx` - Uso correcto del contexto
 
 ### Al Agregar Funcionalidades
 1. **Permisos**: Definir qué roles pueden acceder
@@ -164,15 +266,35 @@ npm run deploy          # Deploy a GitHub Pages
 ## Variables de Entorno Críticas
 
 ```env
-# Google Drive API
-REACT_APP_GOOGLE_CLIENT_ID=
-REACT_APP_GOOGLE_API_KEY=
-REACT_APP_GOOGLE_CLIENT_SECRET=
+# Supabase (Backend Principal)
+REACT_APP_SUPABASE_URL=https://tu-proyecto.supabase.co
+REACT_APP_SUPABASE_ANON_KEY=tu_anon_key_aqui
 
 # Configuración
 REACT_APP_STAMPS_PER_REWARD=10
-REACT_APP_AUTO_BACKUP_ENABLED=true
-REACT_APP_BACKUP_INTERVAL_HOURS=24
+REACT_APP_ENVIRONMENT=development
+REACT_APP_VERSION=1.5.0
+
+# PWA
+REACT_APP_PWA_ENABLED=true
+REACT_APP_NOTIFICATIONS_ENABLED=true
+```
+
+### ⚠️ Importante sobre Variables de Entorno
+
+1. **Reiniciar servidor**: Después de modificar `.env`, SIEMPRE reinicia el servidor (`Ctrl+C` y `npm start`)
+2. **Sin comillas**: No uses comillas en los valores
+3. **Sin espacios**: No dejes espacios alrededor del `=`
+4. **Prefijo obligatorio**: Todas las variables deben empezar con `REACT_APP_`
+
+**Ejemplo correcto:**
+```env
+REACT_APP_SUPABASE_URL=https://nennbrzccidutbhbdbzd.supabase.co
+```
+
+**Ejemplo incorrecto:**
+```env
+REACT_APP_SUPABASE_URL = "https://nennbrzccidutbhbdbzd.supabase.co"  # ❌
 ```
 
 ## Checklist para Pull Requests
@@ -190,20 +312,54 @@ REACT_APP_BACKUP_INTERVAL_HOURS=24
 
 ## Recursos Importantes
 
+### Documentación Principal
+- **Migración a Supabase**: `MIGRACION_SUPABASE.md` - Registro completo de la migración
+- **Configuración de Supabase**: `SUPABASE_SETUP.md` - Guía de configuración
+- **Esquema de base de datos**: `SUPABASE_SCHEMA_SIMPLE.sql` - Esquema SQL actual
+- **Problemas conocidos**: `PROBLEMA_SUPABASE_CLIENTES.md` - Problemas resueltos y lecciones aprendidas
 - **Documentación de permisos**: `utils/permissions.simple.js`
-- **Sistema de backup**: `DOCUMENTACION_BACKUP.md`
-- **Configuración Google Drive**: `GOOGLE_DRIVE_SETUP.md`
 - **Guía de inicio rápido**: `QUICK_START.md`
 - **Mapa del proyecto**: `PROJECT_MAP.md`
+
+### Archivos Clave del Código
+- **Cliente Supabase**: `src/services/supabaseClient.js`
+- **Servicio de clientes**: `src/services/customersService.js`
+- **Contexto de clientes**: `src/contexts/CustomerContext.js`
+- **Formulario principal**: `src/components/EnhancedCustomerForm.jsx`
+- **Sistema principal**: `src/components/LoyaltyCardSystem.jsx`
 
 ## Notas Importantes
 
 1. **No eliminar funcionalidades existentes** sin consultar
 2. **Mantener compatibilidad** con versiones anteriores de datos
 3. **Probar en móvil** antes de considerar completo
-4. **Backup antes de cambios grandes** en estructura de datos
+4. **NUNCA commitear credenciales** - Usar siempre variables de entorno
 5. **Documentar decisiones técnicas** importantes
-6. **NUNCA commitear credenciales** - Usar siempre variables de entorno
+6. **Respetar el flujo de datos**: Siempre usar el contexto, nunca bypass
+7. **Verificar componente real**: `EnhancedCustomerForm` es el usado, no `CustomerForm`
+8. **Reiniciar servidor**: Después de cambios en `.env`
+
+## Problemas Comunes y Soluciones
+
+### 1. "Los clientes no se guardan en Supabase"
+**Causa:** Bypass del contexto, guardando directamente en localStorage  
+**Solución:** Usar siempre `addCustomer()` del contexto
+
+### 2. "Variables de entorno no se cargan"
+**Causa:** Servidor no reiniciado después de cambiar `.env`  
+**Solución:** `Ctrl+C` y `npm start`
+
+### 3. "Modifico CustomerForm.jsx pero no hay cambios"
+**Causa:** El componente real es `EnhancedCustomerForm.jsx`  
+**Solución:** Editar `EnhancedCustomerForm.jsx` y `LoyaltyCardSystem.jsx`
+
+### 4. "Error: relation 'customers' does not exist"
+**Causa:** Tablas no creadas en Supabase  
+**Solución:** Ejecutar `SUPABASE_SCHEMA_SIMPLE.sql` en Supabase SQL Editor
+
+### 5. "Logs de DEBUG no aparecen"
+**Causa:** Código modificado no es el que se ejecuta  
+**Solución:** Verificar imports y componentes reales usando `grep`
 
 ## Credenciales de Prueba
 
@@ -219,6 +375,96 @@ Contraseña: empleado123
 
 ---
 
-**Última actualización**: Octubre 2025
-**Versión del proyecto**: 1.0.0
+## Esquema de Base de Datos (Supabase)
+
+### Tabla: `customers`
+```sql
+- id: UUID (Primary Key, auto-generado)
+- name: TEXT (NOT NULL)
+- phone: TEXT (UNIQUE, NOT NULL)
+- document: TEXT (Opcional, ej: "V-12345678")
+- stamps: INTEGER (Default: 0)
+- rewards: INTEGER (Default: 0)
+- created_at: TIMESTAMPTZ (Auto)
+- updated_at: TIMESTAMPTZ (Auto, con trigger)
+```
+
+### Tabla: `stamp_history`
+```sql
+- id: UUID (Primary Key)
+- customer_id: UUID (Foreign Key -> customers.id)
+- stamps_added: INTEGER (NOT NULL)
+- created_at: TIMESTAMPTZ (Auto)
+```
+
+### Políticas de Seguridad (RLS)
+- Row Level Security habilitado
+- Políticas permiten acceso completo con `anon` key
+- Triggers automáticos para `updated_at`
+
+---
+
+## Historial de Cambios Importantes
+
+### 28 de Octubre, 2025 - Migración a Supabase y Correcciones CRUD
+**Sesión completa de 5 horas - 6 problemas resueltos**
+
+#### Migración Inicial:
+- ✅ Eliminado Google Drive como sistema de backup
+- ✅ Integrado Supabase como backend principal
+- ✅ Creado esquema simplificado de base de datos (`SUPABASE_SCHEMA_SIMPLE.sql`)
+- ✅ Actualizado CustomerContext para usar Supabase
+- ⚠️ `CustomerForm.jsx` marcado como legacy (no se usa)
+- ✅ `EnhancedCustomerForm.jsx` confirmado como componente activo
+
+#### Problemas Encontrados y Resueltos:
+
+**Problema 1-3: Creación de Clientes**
+- ❌ Clientes no se guardaban en Supabase
+- ✅ Corregido `LoyaltyCardSystem.jsx` para usar `addCustomerFromContext`
+- ✅ Agregados logs de debugging
+- ✅ Importado `useCustomers` del contexto
+
+**Problema 4: Eliminación de Clientes**
+- ❌ Clientes reaparecían al recargar
+- ✅ Corregido para usar `deleteCustomerFromContext`
+- ✅ Eliminación persistente en Supabase
+
+**Problema 5: Importación de Clientes**
+- ❌ Importación solo guardaba en localStorage
+- ✅ Reescrita función para usar `addCustomerFromContext`
+- ✅ Importación por lotes con detección de duplicados
+- ✅ Resumen de importación (exitosos/omitidos/errores)
+
+**Problema 6: Menú de Importar/Exportar**
+- ❌ Funciones no visibles en el menú
+- ✅ Agregados botones en `Navigation.jsx`
+- ✅ Creada función de importación en `MainApp.jsx`
+- ✅ Mejorado diseño del menú con colores de marca
+
+#### Mejoras de UX:
+- ✅ Menú desplegable rediseñado con colores ACRILCARD (rojo/naranja)
+- ✅ Iconos coloridos por categoría
+- ✅ Gradientes en hover
+- ✅ Contador de clientes en botón de exportar
+- ✅ Secciones organizadas: Datos, Reportes, Sistema
+
+#### Archivos Modificados:
+1. `src/components/LoyaltyCardSystem.jsx` - Funciones CRUD corregidas
+2. `src/contexts/CustomerContext.js` - Logs de debugging
+3. `src/services/supabaseClient.js` - Logs de configuración
+4. `src/components/common/Navigation.jsx` - Menú mejorado
+5. `src/MainApp.jsx` - Función de importación agregada
+6. `SUPABASE_SCHEMA_SIMPLE.sql` - Esquema creado
+7. `PROBLEMA_SUPABASE_CLIENTES.md` - Documentación completa
+
+**Documentación:** Ver `MIGRACION_SUPABASE.md` y `PROBLEMA_SUPABASE_CLIENTES.md`
+
+**Lección Principal:** Todas las operaciones CRUD DEBEN usar el contexto. NUNCA guardar directamente en localStorage o Supabase.
+
+---
+
+**Última actualización**: 28 de Octubre, 2025
+**Versión del proyecto**: 1.5.0
+**Backend**: Supabase (PostgreSQL)
 **Mantenedor**: ACRIL Pinturas

@@ -13,6 +13,11 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
+// DEBUG: Mostrar estado de configuración
+console.log('🔍 DEBUG Supabase Config:');
+console.log('  URL:', supabaseUrl ? '✅ Configurado' : '❌ NO configurado');
+console.log('  Key:', supabaseAnonKey ? '✅ Configurado' : '❌ NO configurado');
+
 // Validar que las credenciales estén configuradas
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn(

@@ -7,8 +7,9 @@ import { InputField, Button, EnhancedCustomerForm } from './common';
 import CustomerList from './CustomerList';
 import { enviarTarjetaPorWhatsApp } from '../utils/whatsapp';
 
-// Importar contexto de notificaciones
+// Importar contextos
 import { useNotification } from '../contexts/NotificationContext';
+import { useCustomers } from '../contexts/CustomerContext';
 // PocketBase data access (source of truth) with localStorage as cache
 import { deleteCustomerRecord as pbDeleteCustomerRecord } from '../services/customerStore';
 
@@ -54,6 +55,12 @@ const LoyaltyCardSystem = ({
   filterByDate = 'all',
   setFilterByDate
 }) => {
+  // Obtener funciones del contexto
+  const { 
+    addCustomer: addCustomerFromContext,
+    deleteCustomer: deleteCustomerFromContext 
+  } = useCustomers();
+  
   // Estados locales
   const [stampsPerReward, setStampsPerRewardState] = useState(initialStampsPerReward);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -91,37 +98,83 @@ const LoyaltyCardSystem = ({
   const { showError, showSuccess, showWarning } = useNotification();
 
   // Función para manejar los datos importados desde JSON
-  const handleJsonImported = useCallback((jsonData) => {
+  const handleJsonImported = useCallback(async (jsonData) => {
     try {
-      console.log('Datos importados:', jsonData);
+      console.log('🔍 DEBUG Datos importados:', jsonData);
+
+      let clientsToImport = [];
 
       // Verificar si los datos son un array o si tienen una propiedad 'customers'
       if (Array.isArray(jsonData)) {
-        // Si es un array, asumimos que son los clientes directamente
-        const newCustomers = [...customers, ...jsonData];
-        setCustomers(newCustomers);
-        localStorage.setItem('customers', JSON.stringify(newCustomers));
-        showSuccess(`${jsonData.length} clientes importados correctamente`);
+        clientsToImport = jsonData;
       } else if (jsonData.customers && Array.isArray(jsonData.customers)) {
-        // Si tiene una propiedad 'customers' que es un array
-        const newCustomers = [...customers, ...jsonData.customers];
-        setCustomers(newCustomers);
-        localStorage.setItem('customers', JSON.stringify(newCustomers));
-        showSuccess(`${jsonData.customers.length} clientes importados correctamente`);
+        clientsToImport = jsonData.customers;
       } else if (typeof jsonData === 'object' && jsonData !== null) {
-        // Si es un objeto único, lo agregamos como un solo cliente
-        const newCustomers = [...customers, jsonData];
-        setCustomers(newCustomers);
-        localStorage.setItem('customers', JSON.stringify(newCustomers));
-        showSuccess('Cliente importado correctamente');
+        clientsToImport = [jsonData];
       } else {
         throw new Error('Formato de archivo no reconocido');
       }
+
+      if (clientsToImport.length === 0) {
+        showError('No se encontraron clientes para importar');
+        return;
+      }
+
+      console.log(`📦 Importando ${clientsToImport.length} clientes a Supabase...`);
+      
+      let imported = 0;
+      let skipped = 0;
+      let errors = 0;
+
+      // Importar cada cliente usando addCustomer del contexto
+      for (const client of clientsToImport) {
+        try {
+          // Verificar si el cliente ya existe por teléfono
+          const exists = customers.find(c => c.phone === client.phone);
+          if (exists) {
+            console.log(`⏭️ Cliente ya existe: ${client.name}`);
+            skipped++;
+            continue;
+          }
+
+          // Preparar datos del cliente
+          const clientData = {
+            name: client.name || 'Cliente sin nombre',
+            phone: client.phone || '',
+            idType: client.idType || 'V',
+            idNumber: client.idNumber || '',
+            cedula: client.cedula || `${client.idType || 'V'}-${client.idNumber || ''}`,
+            code: client.code || '',
+            stamps: client.stamps || 0,
+            totalPurchases: client.totalPurchases || 0,
+            rewardsEarned: client.rewardsEarned || 0,
+            purchaseHistory: client.purchaseHistory || [],
+            joinDate: client.joinDate || new Date().toISOString(),
+            lastPurchase: client.lastPurchase || null,
+          };
+
+          // Usar addCustomer del contexto (guarda en Supabase)
+          await addCustomerFromContext(clientData);
+          imported++;
+          console.log(`✅ Importado: ${client.name}`);
+        } catch (error) {
+          console.error(`❌ Error importando ${client.name}:`, error);
+          errors++;
+        }
+      }
+
+      // Mostrar resumen
+      const message = `Importación completada: ${imported} exitosos, ${skipped} omitidos, ${errors} errores`;
+      if (errors > 0) {
+        showWarning(message);
+      } else {
+        showSuccess(message);
+      }
     } catch (error) {
-      console.error('Error al procesar el archivo JSON:', error);
+      console.error('❌ Error al procesar el archivo JSON:', error);
       showError(`Error al importar datos: ${error.message}`);
     }
-  }, [customers, setCustomers, showError, showSuccess]);
+  }, [customers, addCustomerFromContext, showError, showSuccess, showWarning]);
 
   // Usar el hook de scroll pasivo para  // Efecto para manejar el scroll pasivo
   const handleScroll = useCallback(() => {
@@ -557,43 +610,28 @@ const addCustomer = useCallback(async () => {
     }
   }, [stampsPerReward, selectedCustomer, showSuccess, showError, setCustomers]);
 
-  const deleteCustomer = useCallback((customerId) => {
+  const deleteCustomer = useCallback(async (customerId) => {
     if (window.confirm('¿Estás seguro de eliminar este cliente? Esta acción no se puede deshacer.')) {
       try {
-        // Usar el estado actual para evitar dependencias innecesarias
-        setCustomers(prevCustomers => {
-          // Filtrar el cliente a eliminar
-          const updatedCustomers = prevCustomers.filter(c => c.id !== customerId);
-
-          // Actualizar localStorage
-          localStorage.setItem('customers', JSON.stringify(updatedCustomers));
-          // Eliminar en PocketBase (enqueue on failure, only if not a temp id)
-          try {
-            if (String(customerId).startsWith('temp-')) {
-              // If temp, just remove locally; creation may never happen
-            } else {
-              pbDeleteCustomerRecord(customerId).catch(() => {
-                // TODO: implementar cola offline para borrar cuando vuelva la conexión
-              });
-            }
-          } catch {}
-
-          return updatedCustomers;
-        });
+        console.log('🔍 DEBUG Eliminando cliente:', customerId);
+        
+        // Usar deleteCustomer del contexto (elimina de Supabase)
+        await deleteCustomerFromContext(customerId);
+        
+        console.log('✅ Cliente eliminado exitosamente');
 
         // Limpiar la selección si el cliente eliminado es el seleccionado
         if (selectedCustomer?.id === customerId) {
           setSelectedCustomer(null);
         }
 
-        // Mostrar notificación de éxito
         showSuccess('Cliente eliminado exitosamente');
       } catch (error) {
-        console.error('Error al eliminar cliente:', error);
+        console.error('❌ Error al eliminar cliente:', error);
         showError('Error al eliminar cliente');
       }
     }
-  }, [selectedCustomer, setCustomers, showSuccess, showError]);
+  }, [selectedCustomer, deleteCustomerFromContext, showSuccess, showError]);
 
   // (Manejador de exportación embebido en el JSX más abajo)
 
@@ -831,52 +869,45 @@ const addCustomer = useCallback(async () => {
                 <EnhancedCustomerForm
                   customer={null}
                   onSave={async (customerData) => {
-                    // El EnhancedCustomerForm ya validó los datos, solo necesitamos procesarlos
-                    const code = generateCustomerCode(
-                      customerData.idType,
-                      customerData.idNumber,
-                      customerData.name,
-                      customers
-                    );
-                    
-                    const payload = {
-                      name: customerData.name,
-                      phone: customerData.phone.replace(/\s|-/g, ''),
-                      idType: customerData.idType,
-                      idNumber: customerData.idNumber,
-                      email: customerData.email || '',
-                      cedula: `${customerData.idType}-${customerData.idNumber}`,
-                      code,
-                      stamps: 0,
-                      totalPurchases: 0,
-                      joinDate: new Date().toISOString(),
-                      lastPurchase: null,
-                      rewardsEarned: 0,
-                      purchaseHistory: [],
-                    };
+                    try {
+                      console.log('🔍 DEBUG LoyaltyCardSystem onSave - Datos recibidos:', customerData);
+                      
+                      // Generar código único para el cliente
+                      const code = generateCustomerCode(
+                        customerData.idType,
+                        customerData.idNumber,
+                        customerData.name,
+                        customers
+                      );
+                      
+                      // Preparar datos para addCustomer del contexto
+                      const payload = {
+                        name: customerData.name,
+                        phone: customerData.phone.replace(/\s|-/g, ''),
+                        idType: customerData.idType,
+                        idNumber: customerData.idNumber,
+                        email: customerData.email || '',
+                        cedula: `${customerData.idType}-${customerData.idNumber}`,
+                        code,
+                        stamps: 0,
+                        totalPurchases: 0,
+                        joinDate: new Date().toISOString(),
+                        lastPurchase: null,
+                        rewardsEarned: 0,
+                        purchaseHistory: [],
+                      };
 
-                    // Generar ID único para el nuevo cliente
-                    const newCustomerId = Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9);
-                    
-                    const created = {
-                      ...payload,
-                      id: newCustomerId,
-                      createdAt: new Date().toISOString(),
-                      updatedAt: new Date().toISOString()
-                    };
-
-                    // Actualizar la lista de clientes directamente
-                    setCustomers(prev => {
-                      const updated = [...prev, created];
-                      try { 
-                        localStorage.setItem('customers', JSON.stringify(updated)); 
-                      } catch (error) {
-                        console.error('Error saving to localStorage:', error);
-                      }
-                      return updated;
-                    });
-
-                    setSelectedCustomer(created);
+                      console.log('🔍 DEBUG Llamando a addCustomerFromContext con:', payload);
+                      
+                      // Usar addCustomer del contexto (guarda en Supabase)
+                      const created = await addCustomerFromContext(payload);
+                      
+                      console.log('✅ Cliente creado exitosamente:', created);
+                      setSelectedCustomer(created);
+                    } catch (error) {
+                      console.error('❌ Error al crear cliente:', error);
+                      throw error;
+                    }
                   }}
                   onCancel={() => {
                     // El EnhancedCustomerForm maneja su propio reset

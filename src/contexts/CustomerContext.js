@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
+import customersService from '../services/customersService';
+import { isSupabaseConfigured } from '../services/supabaseClient';
 
 // Crear el contexto
 const CustomerContext = createContext();
@@ -14,30 +16,47 @@ export const CustomerProvider = ({ children }) => {
   const [prefixCandidates, setPrefixCandidates] = useState([]);
   const [showPrefixFixModal, setShowPrefixFixModal] = useState(false);
 
-  // Cargar clientes desde localStorage al inicializar
+  // Cargar clientes desde Supabase o localStorage al inicializar
   useEffect(() => {
-    const loadCustomers = () => {
+    const loadCustomers = async () => {
+      setLoading(true);
       try {
+        if (isSupabaseConfigured()) {
+          console.log('✅ Cargando clientes desde Supabase...');
+          const data = await customersService.getAllCustomers();
+          setCustomers(data);
+          console.log(`✅ ${data.length} clientes cargados desde Supabase`);
+        } else {
+          console.log('⚠️ Supabase no configurado, usando localStorage');
+          const stored = localStorage.getItem('customers');
+          if (stored) {
+            const customersData = JSON.parse(stored);
+            setCustomers(customersData);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error loading customers:', error);
+        // Fallback a localStorage si falla Supabase
         const stored = localStorage.getItem('customers');
         if (stored) {
           const customersData = JSON.parse(stored);
           setCustomers(customersData);
         }
-      } catch (error) {
-        console.error('Error loading customers:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
     loadCustomers();
   }, []);
 
-  // Guardar clientes en localStorage cuando cambien
+  // Guardar clientes en localStorage como backup (solo si Supabase no está configurado)
   useEffect(() => {
-    if (customers.length > 0) {
+    if (customers.length > 0 && !isSupabaseConfigured()) {
       try {
         localStorage.setItem('customers', JSON.stringify(customers));
       } catch (error) {
-        console.error('Error saving customers:', error);
+        console.error('Error saving customers to localStorage:', error);
       }
     }
   }, [customers]);
@@ -46,39 +65,75 @@ export const CustomerProvider = ({ children }) => {
   const addCustomer = useCallback(async (customerData) => {
     setLoading(true);
     try {
-      // Aquí iría la lógica de validación y creación
-      const newCustomer = {
-        id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        ...customerData,
-        stamps: 0,
-        totalPurchases: 0,
-        rewardsEarned: 0,
-        purchaseHistory: [],
-        whatsappHistory: [],
-        joinDate: new Date().toISOString(),
-        lastPurchase: null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      console.log('🔍 DEBUG addCustomer - Datos recibidos:', customerData);
+      console.log('🔍 DEBUG isSupabaseConfigured:', isSupabaseConfigured());
+      
+      let newCustomer;
+      
+      if (isSupabaseConfigured()) {
+        // Crear en Supabase
+        console.log('📝 Creando cliente en Supabase...');
+        const dataToSend = {
+          name: customerData.name,
+          phone: customerData.phone,
+          document: customerData.cedula || customerData.document || `${customerData.idType}-${customerData.idNumber}` || null,
+          stamps: 0,
+          rewards: 0
+        };
+        console.log('🔍 DEBUG Datos a enviar a Supabase:', dataToSend);
+        
+        newCustomer = await customersService.createCustomer(dataToSend);
+        console.log('✅ Cliente creado en Supabase:', newCustomer.id);
+      } else {
+        // Crear localmente
+        newCustomer = {
+          id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          ...customerData,
+          stamps: 0,
+          rewards: 0,
+          totalPurchases: 0,
+          rewardsEarned: 0,
+          purchaseHistory: [],
+          whatsappHistory: [],
+          joinDate: new Date().toISOString(),
+          lastPurchase: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+      }
 
       setCustomers(prev => [...prev, newCustomer]);
       setSelectedCustomer(newCustomer);
 
       return newCustomer;
     } catch (error) {
-      console.error('Error adding customer:', error);
+      console.error('❌ Error adding customer:', error);
       throw error;
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const updateCustomer = useCallback((customerId, updates) => {
-    setCustomers(prev => prev.map(customer =>
-      customer.id === customerId
-        ? { ...customer, ...updates, updatedAt: new Date().toISOString() }
-        : customer
-    ));
+  const updateCustomer = useCallback(async (customerId, updates) => {
+    try {
+      if (isSupabaseConfigured()) {
+        console.log('📝 Actualizando cliente en Supabase:', customerId);
+        const updated = await customersService.updateCustomer(customerId, updates);
+        setCustomers(prev => prev.map(customer =>
+          customer.id === customerId ? updated : customer
+        ));
+        console.log('✅ Cliente actualizado en Supabase');
+      } else {
+        setCustomers(prev => prev.map(customer =>
+          customer.id === customerId
+            ? { ...customer, ...updates, updatedAt: new Date().toISOString() }
+            : customer
+        ));
+      }
+    } catch (error) {
+      console.error('❌ Error updating customer:', error);
+      throw error;
+    }
   }, []);
   
   // Agregar mensaje de WhatsApp al historial
@@ -108,19 +163,32 @@ export const CustomerProvider = ({ children }) => {
     return historyEntry;
   }, []);
 
-  const deleteCustomer = useCallback((customerId) => {
-    setCustomers(prev => {
-      const updated = prev.filter(c => c.id !== customerId);
-      try {
-        localStorage.setItem('customers', JSON.stringify(updated));
-      } catch (error) {
-        console.error('Error saving after delete:', error);
+  const deleteCustomer = useCallback(async (customerId) => {
+    try {
+      if (isSupabaseConfigured()) {
+        console.log('🗑️ Eliminando cliente de Supabase:', customerId);
+        await customersService.deleteCustomer(customerId);
+        console.log('✅ Cliente eliminado de Supabase');
       }
-      return updated;
-    });
+      
+      setCustomers(prev => {
+        const updated = prev.filter(c => c.id !== customerId);
+        if (!isSupabaseConfigured()) {
+          try {
+            localStorage.setItem('customers', JSON.stringify(updated));
+          } catch (error) {
+            console.error('Error saving after delete:', error);
+          }
+        }
+        return updated;
+      });
 
-    if (selectedCustomer?.id === customerId) {
-      setSelectedCustomer(null);
+      if (selectedCustomer?.id === customerId) {
+        setSelectedCustomer(null);
+      }
+    } catch (error) {
+      console.error('❌ Error deleting customer:', error);
+      throw error;
     }
   }, [selectedCustomer]);
 

@@ -15,12 +15,13 @@ const MainApp = () => {
     return savedStamps ? parseInt(savedStamps, 10) : 10;
   });
 
-  const { showError, showSuccess } = useNotification();
+  const { showError, showSuccess, showWarning } = useNotification();
   
   // Usar el contexto de clientes en lugar de estado local
   const {
     customers,
     setCustomers,
+    addCustomer,
     prefixCandidates,
     setPrefixCandidates,
     showPrefixFixModal,
@@ -128,12 +129,92 @@ const MainApp = () => {
     }
   }, [customers, prefixCandidates, showSuccess, showError]);
 
+  // Función para importar clientes desde JSON
+  const handleImportCustomersFromJSON = useCallback(async (jsonData) => {
+    try {
+      console.log('🔍 DEBUG Importando clientes desde MainApp:', jsonData);
+
+      let clientsToImport = [];
+
+      // Verificar formato del JSON
+      if (Array.isArray(jsonData)) {
+        clientsToImport = jsonData;
+      } else if (jsonData.customers && Array.isArray(jsonData.customers)) {
+        clientsToImport = jsonData.customers;
+      } else if (typeof jsonData === 'object' && jsonData !== null) {
+        clientsToImport = [jsonData];
+      } else {
+        throw new Error('Formato de archivo no reconocido');
+      }
+
+      if (clientsToImport.length === 0) {
+        showError('No se encontraron clientes para importar');
+        return;
+      }
+
+      console.log(`📦 Importando ${clientsToImport.length} clientes...`);
+      
+      let imported = 0;
+      let skipped = 0;
+      let errors = 0;
+
+      // Importar cada cliente
+      for (const client of clientsToImport) {
+        try {
+          // Verificar si ya existe por teléfono
+          const exists = customers.find(c => c.phone === client.phone);
+          if (exists) {
+            console.log(`⏭️ Cliente ya existe: ${client.name}`);
+            skipped++;
+            continue;
+          }
+
+          // Preparar datos
+          const clientData = {
+            name: client.name || 'Cliente sin nombre',
+            phone: client.phone || '',
+            idType: client.idType || 'V',
+            idNumber: client.idNumber || '',
+            cedula: client.cedula || `${client.idType || 'V'}-${client.idNumber || ''}`,
+            code: client.code || '',
+            stamps: client.stamps || 0,
+            totalPurchases: client.totalPurchases || 0,
+            rewardsEarned: client.rewardsEarned || 0,
+            purchaseHistory: client.purchaseHistory || [],
+            joinDate: client.joinDate || new Date().toISOString(),
+            lastPurchase: client.lastPurchase || null,
+          };
+
+          // Importar usando addCustomer del contexto
+          await addCustomer(clientData);
+          imported++;
+          console.log(`✅ Importado: ${client.name}`);
+        } catch (error) {
+          console.error(`❌ Error importando ${client.name}:`, error);
+          errors++;
+        }
+      }
+
+      // Mostrar resumen
+      const message = `Importación: ${imported} exitosos, ${skipped} omitidos, ${errors} errores`;
+      if (errors > 0) {
+        showWarning(message);
+      } else {
+        showSuccess(message);
+      }
+    } catch (error) {
+      console.error('❌ Error al importar:', error);
+      showError(`Error al importar: ${error.message}`);
+    }
+  }, [customers, addCustomer, showError, showSuccess, showWarning]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation
         onExit={setShowMainPanel}
         showMainPanel={showMainPanel}
         normalizeCustomerIds={normalizeCustomerIds}
+        onImportCustomersFromJSON={handleImportCustomersFromJSON}
         onExportCustomersToJSON={() => {
           try {
             const payload = {
