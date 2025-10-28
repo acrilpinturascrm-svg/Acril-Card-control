@@ -169,20 +169,33 @@ const MainApp = () => {
             continue;
           }
 
-          // Preparar datos
+          // Preparar datos con mapeo flexible de campos
+          // Extraer idType e idNumber de cedula si existe
+          let idType = client.idType || 'V';
+          let idNumber = client.idNumber || '';
+          
+          if (client.cedula && !client.idNumber) {
+            // Parsear cedula formato "V-12345678" o "V12345678"
+            const cedulaMatch = client.cedula.match(/^([VEJPG])-?(\d+)$/i);
+            if (cedulaMatch) {
+              idType = cedulaMatch[1].toUpperCase();
+              idNumber = cedulaMatch[2];
+            }
+          }
+          
           const clientData = {
-            name: client.name || 'Cliente sin nombre',
-            phone: client.phone || '',
-            idType: client.idType || 'V',
-            idNumber: client.idNumber || '',
-            cedula: client.cedula || `${client.idType || 'V'}-${client.idNumber || ''}`,
-            code: client.code || '',
-            stamps: client.stamps || 0,
-            totalPurchases: client.totalPurchases || 0,
-            rewardsEarned: client.rewardsEarned || 0,
-            purchaseHistory: client.purchaseHistory || [],
-            joinDate: client.joinDate || new Date().toISOString(),
-            lastPurchase: client.lastPurchase || null,
+            name: client.name || client.nombre || 'Cliente sin nombre',
+            phone: client.phone || client.telefono || client.tel || '',
+            idType: idType,
+            idNumber: idNumber,
+            cedula: client.cedula || `${idType}-${idNumber}`,
+            code: client.code || client.codigo || '',
+            stamps: parseInt(client.stamps || client.sellos || 0),
+            totalPurchases: client.totalPurchases || client.comprasTotales || 0,
+            rewardsEarned: client.rewardsEarned || client.premiosGanados || 0,
+            purchaseHistory: client.purchaseHistory || client.historialCompras || client.history || [],
+            joinDate: client.joinDate || client.fechaRegistro || client.createdAt || new Date().toISOString(),
+            lastPurchase: client.lastPurchase || client.ultimaCompra || client.updatedAt || null,
           };
 
           // Importar usando addCustomer del contexto
