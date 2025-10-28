@@ -110,15 +110,30 @@ export const createCustomer = async (customerData) => {
       return newCustomer;
     }
 
+    // Preparar datos para Supabase con todos los campos
+    const supabaseData = {
+      name: customerData.name,
+      phone: customerData.phone,
+      id_type: customerData.idType || 'V',
+      id_number: customerData.idNumber || null,
+      cedula: customerData.cedula || null,
+      document: customerData.document || customerData.cedula || null,
+      code: customerData.code || null,
+      stamps: parseInt(customerData.stamps) || 0,
+      rewards: parseInt(customerData.rewards) || 0,
+      total_purchases: parseInt(customerData.totalPurchases) || 0,
+      rewards_earned: parseInt(customerData.rewardsEarned) || 0,
+      join_date: customerData.joinDate || null,
+      last_purchase: customerData.lastPurchase || null,
+      purchase_history: customerData.purchaseHistory || [],
+      history: customerData.history || []
+    };
+
+    console.log('🔍 DEBUG Datos a enviar a Supabase:', supabaseData);
+
     const { data, error } = await supabase
       .from(CUSTOMERS_TABLE)
-      .insert([{
-        name: customerData.name,
-        phone: customerData.phone,
-        document: customerData.document || null,
-        stamps: customerData.stamps || 0,
-        rewards: customerData.rewards || 0
-      }])
+      .insert([supabaseData])
       .select()
       .single();
 
