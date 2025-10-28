@@ -170,3 +170,7 @@ playwright/.cache/
 # Build outputs
 build/
 dist/
+
+# Customer data backups (privacidad)
+customers-*.json
+*backup*.json
