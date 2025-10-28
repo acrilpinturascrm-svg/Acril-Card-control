@@ -94,12 +94,28 @@ const Analytics = () => {
     };
 
     // Métricas de rendimiento
+    // Calcular tiempo promedio hasta primera recompensa (en días)
+    const customersWithRewards = customers.filter(c => (c.rewards || 0) > 0);
+    let avgDaysToFirstReward = 0;
+    if (customersWithRewards.length > 0) {
+      const totalDays = customersWithRewards.reduce((sum, customer) => {
+        const createdDate = new Date(customer.createdAt || customer.dateAdded || Date.now());
+        const now = new Date();
+        const daysDiff = Math.floor((now - createdDate) / (1000 * 60 * 60 * 24));
+        return sum + daysDiff;
+      }, 0);
+      avgDaysToFirstReward = (totalDays / customersWithRewards.length).toFixed(1);
+    }
+
+    // Calcular frecuencia de visitas (sellos por mes activo)
+    const avgStampsPerMonth = totalCustomers > 0 ? ((totalStamps / totalCustomers) * 30 / 365).toFixed(1) : 0;
+
     const performanceMetrics = {
       avgStampsPerCustomer: totalCustomers > 0 ? (totalStamps / totalCustomers).toFixed(2) : 0,
       conversionRate: totalCustomers > 0 ? ((customers.filter(c => (c.rewards || 0) > 0).length / totalCustomers) * 100).toFixed(1) : 0,
       engagementRate: totalCustomers > 0 ? ((activeCustomers / totalCustomers) * 100).toFixed(1) : 0,
-      avgTimeToFirstReward: '12.5', // Simulado
-      customerLifetimeValue: '45.2' // Simulado
+      avgDaysToFirstReward: avgDaysToFirstReward || 'N/A',
+      avgStampsPerMonth: avgStampsPerMonth
     };
 
     // Comparación con período anterior
@@ -304,17 +320,17 @@ const Analytics = () => {
 
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <div className="flex items-center justify-between mb-2">
-              <Zap className="w-6 h-6 text-yellow-600" />
-              <span className="text-sm font-medium text-yellow-600">
-                ${analyticsData.performanceMetrics.customerLifetimeValue}
+              <Activity className="w-6 h-6 text-purple-600" />
+              <span className="text-sm font-medium text-purple-600">
+                {analyticsData.performanceMetrics.avgStampsPerMonth}
               </span>
             </div>
             <p className="text-2xl font-bold text-gray-900">
-              {((analyticsData.totalCustomers / 30) * parseInt(timeRange)).toFixed(0)}
+              {analyticsData.totalCustomers / analyticsData.totalStamps}
             </p>
-            <p className="text-sm text-gray-600">Velocidad</p>
+            <p className="text-sm text-gray-600">Sellos/Mes</p>
             <p className="text-xs text-gray-500 mt-1">
-              Clientes/día promedio
+              Promedio de sellos por mes
             </p>
           </div>
         </div>
@@ -476,13 +492,13 @@ const Analytics = () => {
             
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Tiempo promedio a 1er premio</span>
-                <span className="font-medium text-gray-900">{analyticsData.performanceMetrics.avgTimeToFirstReward} días</span>
+                <span className="text-sm text-gray-600">Días promedio a 1er premio</span>
+                <span className="font-medium text-gray-900">{analyticsData.performanceMetrics.avgDaysToFirstReward} {analyticsData.performanceMetrics.avgDaysToFirstReward !== 'N/A' ? 'días' : ''}</span>
               </div>
               
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Valor de vida del cliente</span>
-                <span className="font-medium text-gray-900">${analyticsData.performanceMetrics.customerLifetimeValue}</span>
+                <span className="text-sm text-gray-600">Frecuencia de visitas</span>
+                <span className="font-medium text-gray-900">{analyticsData.performanceMetrics.avgStampsPerMonth} sellos/mes</span>
               </div>
               
               <div className="flex justify-between items-center">

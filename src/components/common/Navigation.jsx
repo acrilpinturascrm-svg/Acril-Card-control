@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Gift, RefreshCw, Download, LogOut, User, Settings, BarChart3, Users, FileText, Save, Shield, Database } from 'lucide-react';
 import { useAuth, USER_ROLES } from '../../contexts/AuthContext';
 import { Button, DropdownMenu, UserInfo } from './';
@@ -33,6 +33,7 @@ const Navigation = ({
 
   // Estado para mostrar/ocultar BackupManager
   const [showBackupManager, setShowBackupManager] = useState(false);
+  const navigate = useNavigate();
 
   // Mostrar información del usuario si está autenticado
   const showUserInfo = user && role;
@@ -130,7 +131,7 @@ const Navigation = ({
 
                         {canViewReportsMenu && (
                           <Button
-                            onClick={() => window.location.href = '/reports'}
+                            onClick={() => navigate('/reports')}
                             variant="ghost"
                             size="sm"
                             className="text-gray-700 hover:bg-gray-100 text-sm w-full justify-start"
@@ -142,7 +143,7 @@ const Navigation = ({
 
                         {canViewAdvancedReportsMenu && (
                           <Button
-                            onClick={() => window.location.href = '/advanced-reports'}
+                            onClick={() => navigate('/advanced-reports')}
                             variant="ghost"
                             size="sm"
                             className="text-gray-700 hover:bg-gray-100 text-sm w-full justify-start"
@@ -154,7 +155,7 @@ const Navigation = ({
 
                         {canViewAnalyticsMenu && (
                           <Button
-                            onClick={() => window.location.href = '/analytics'}
+                            onClick={() => navigate('/analytics')}
                             variant="ghost"
                             size="sm"
                             className="text-gray-700 hover:bg-gray-100 text-sm w-full justify-start"
@@ -176,7 +177,7 @@ const Navigation = ({
                               Sistema
                             </div>
                             <Button
-                              onClick={() => window.location.href = '/settings'}
+                              onClick={() => navigate('/settings')}
                               variant="ghost"
                               size="sm"
                               className="text-gray-700 hover:bg-gray-100 text-sm w-full justify-start"
