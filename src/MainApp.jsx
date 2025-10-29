@@ -6,6 +6,8 @@ import Navigation from './components/common/Navigation';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import LoyaltyCardSystem from './components/LoyaltyCardSystem';
 import TestErrorHandling from './pages/TestErrorHandling';
+import { phonesMatch } from './utils/validation';
+import customersService from './services/customersService';
 
 // Componente principal de la aplicación (protegido)
 const MainApp = () => {
@@ -129,7 +131,7 @@ const MainApp = () => {
     }
   }, [customers, prefixCandidates, showSuccess, showError]);
 
-  // Función para importar clientes desde JSON
+  // Función para importar clientes desde JSON con verificación mejorada
   const handleImportCustomersFromJSON = useCallback(async (jsonData) => {
     try {
       console.log('🔍 DEBUG Importando clientes desde MainApp:', jsonData);
@@ -152,20 +154,69 @@ const MainApp = () => {
         return;
       }
 
-      console.log(`📦 Importando ${clientsToImport.length} clientes...`);
+      console.log(`📦 Iniciando importación de ${clientsToImport.length} clientes...`);
+      console.log(`📊 Clientes actuales en estado local: ${customers.length}`);
       
       let imported = 0;
       let skipped = 0;
       let errors = 0;
+      const skippedDetails = [];
 
       // Importar cada cliente
-      for (const client of clientsToImport) {
+      for (let i = 0; i < clientsToImport.length; i++) {
+        const client = clientsToImport[i];
+        const clientPhone = client.phone || client.telefono || client.tel || '';
+        
         try {
-          // Verificar si ya existe por teléfono
-          const exists = customers.find(c => c.phone === client.phone);
+          console.log(`\n📋 [${i + 1}/${clientsToImport.length}] Procesando: ${client.name || 'Sin nombre'}`);
+          console.log(`   📞 Teléfono del archivo: "${clientPhone}"`);
+          
+          // VERIFICACIÓN MEJORADA: Normalizar y comparar teléfonos
+          let exists = false;
+          let matchedCustomer = null;
+          
+          // 1. Verificar en estado local con normalización
+          for (const c of customers) {
+            if (phonesMatch(c.phone, clientPhone)) {
+              exists = true;
+              matchedCustomer = c;
+              console.log(`   ⚠️ MATCH en estado local:`);
+              console.log(`      - Cliente existente: "${c.name}"`);
+              console.log(`      - Teléfono existente: "${c.phone}"`);
+              console.log(`      - Teléfono archivo: "${clientPhone}"`);
+              break;
+            }
+          }
+          
+          // 2. Si no existe en local, verificar en Supabase directamente
+          if (!exists) {
+            console.log(`   🔍 No encontrado en local, verificando en Supabase...`);
+            try {
+              const supabaseResults = await customersService.searchCustomersByPhone(clientPhone);
+              if (supabaseResults && supabaseResults.length > 0) {
+                exists = true;
+                matchedCustomer = supabaseResults[0];
+                console.log(`   ⚠️ MATCH en Supabase:`);
+                console.log(`      - Cliente existente: "${matchedCustomer.name}"`);
+                console.log(`      - Teléfono existente: "${matchedCustomer.phone}"`);
+                console.log(`      - ID en Supabase: ${matchedCustomer.id}`);
+              } else {
+                console.log(`   ✅ No existe en Supabase, se puede importar`);
+              }
+            } catch (searchError) {
+              console.log(`   ⚠️ Error buscando en Supabase (continuando):`, searchError.message);
+            }
+          }
+          
           if (exists) {
-            console.log(`⏭️ Cliente ya existe: ${client.name}`);
+            console.log(`   ⏭️ OMITIDO: Cliente ya existe`);
             skipped++;
+            skippedDetails.push({
+              nombre: client.name || 'Sin nombre',
+              telefonoArchivo: clientPhone,
+              clienteExistente: matchedCustomer.name,
+              telefonoExistente: matchedCustomer.phone
+            });
             continue;
           }
 
@@ -183,12 +234,18 @@ const MainApp = () => {
             }
           }
           
+          // Generar cédula solo si hay idNumber válido
+          let cedula = client.cedula;
+          if (!cedula && idNumber && idNumber.trim() !== '') {
+            cedula = `${idType}-${idNumber}`;
+          }
+          
           const clientData = {
             name: client.name || client.nombre || 'Cliente sin nombre',
-            phone: client.phone || client.telefono || client.tel || '',
+            phone: clientPhone,
             idType: idType,
             idNumber: idNumber,
-            cedula: client.cedula || `${idType}-${idNumber}`,
+            cedula: cedula || null,  // Enviar null si no hay cédula válida
             code: client.code || client.codigo || '',
             stamps: parseInt(client.stamps || client.sellos || 0),
             totalPurchases: client.totalPurchases || client.comprasTotales || 0,
@@ -198,17 +255,40 @@ const MainApp = () => {
             lastPurchase: client.lastPurchase || client.ultimaCompra || client.updatedAt || null,
           };
 
+          console.log(`   📝 Datos preparados:`, {
+            nombre: clientData.name,
+            telefono: clientData.phone,
+            idType: clientData.idType,
+            idNumber: clientData.idNumber,
+            cedula: clientData.cedula,
+            stamps: clientData.stamps,
+            code: clientData.code
+          });
+
           // Importar usando addCustomer del contexto
           await addCustomer(clientData);
           imported++;
-          console.log(`✅ Importado: ${client.name}`);
+          console.log(`   ✅ IMPORTADO exitosamente`);
         } catch (error) {
-          console.error(`❌ Error importando ${client.name}:`, error);
+          console.error(`   ❌ ERROR al importar:`, error);
           errors++;
         }
       }
 
-      // Mostrar resumen
+      // Mostrar resumen detallado
+      console.log('\n📊 RESUMEN DE IMPORTACIÓN:');
+      console.log(`   ✅ Importados: ${imported}`);
+      console.log(`   ⏭️ Omitidos: ${skipped}`);
+      console.log(`   ❌ Errores: ${errors}`);
+      
+      if (skippedDetails.length > 0) {
+        console.log('\n📋 DETALLES DE CLIENTES OMITIDOS:');
+        skippedDetails.forEach((detail, idx) => {
+          console.log(`   ${idx + 1}. "${detail.nombre}" (${detail.telefonoArchivo})`);
+          console.log(`      Ya existe como: "${detail.clienteExistente}" (${detail.telefonoExistente})`);
+        });
+      }
+      
       const message = `Importación: ${imported} exitosos, ${skipped} omitidos, ${errors} errores`;
       if (errors > 0) {
         showWarning(message);

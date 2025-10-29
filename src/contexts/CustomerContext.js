@@ -71,16 +71,36 @@ export const CustomerProvider = ({ children }) => {
       let newCustomer;
       
       if (isSupabaseConfigured()) {
-        // Crear en Supabase
+        // Crear en Supabase - ENVIAR TODOS LOS CAMPOS
         console.log('📝 Creando cliente en Supabase...');
+        
+        // Generar cédula solo si hay idNumber válido
+        let cedula = customerData.cedula;
+        const idType = customerData.idType || 'V';
+        const idNumber = customerData.idNumber || '';
+        
+        if (!cedula && idNumber && idNumber.trim() !== '') {
+          cedula = `${idType}-${idNumber}`;
+        }
+        
         const dataToSend = {
           name: customerData.name,
           phone: customerData.phone,
-          document: customerData.cedula || customerData.document || `${customerData.idType}-${customerData.idNumber}` || null,
-          stamps: 0,
-          rewards: 0
+          idType: idType,
+          idNumber: idNumber,
+          cedula: cedula || null,  // Enviar null si no hay cédula válida
+          document: customerData.document || cedula || null,
+          code: customerData.code || null,
+          stamps: parseInt(customerData.stamps) || 0,
+          rewards: parseInt(customerData.rewards) || 0,
+          totalPurchases: parseInt(customerData.totalPurchases) || 0,
+          rewardsEarned: parseInt(customerData.rewardsEarned) || 0,
+          joinDate: customerData.joinDate || new Date().toISOString(),
+          lastPurchase: customerData.lastPurchase || null,
+          purchaseHistory: customerData.purchaseHistory || [],
+          history: customerData.history || []
         };
-        console.log('🔍 DEBUG Datos a enviar a Supabase:', dataToSend);
+        console.log('🔍 DEBUG Datos completos a enviar a Supabase:', dataToSend);
         
         newCustomer = await customersService.createCustomer(dataToSend);
         console.log('✅ Cliente creado en Supabase:', newCustomer.id);
@@ -261,10 +281,10 @@ export const CustomerProvider = ({ children }) => {
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       result = result.filter(customer => 
-        customer.name.toLowerCase().includes(term) ||
-        customer.phone.includes(term) ||
-        customer.idNumber.includes(term) ||
-        customer.code?.toLowerCase().includes(term)
+        (customer.name || '').toLowerCase().includes(term) ||
+        (customer.phone || '').includes(term) ||
+        (customer.idNumber || '').toString().includes(term) ||
+        (customer.code || '').toLowerCase().includes(term)
       );
     }
     

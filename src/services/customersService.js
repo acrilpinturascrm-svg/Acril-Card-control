@@ -11,6 +11,34 @@ const CUSTOMERS_TABLE = 'customers';
 const STAMP_HISTORY_TABLE = 'stamp_history';
 
 /**
+ * Mapear datos de Supabase (snake_case) a formato de aplicación (camelCase)
+ */
+const mapSupabaseToApp = (supabaseData) => {
+  if (!supabaseData) return null;
+  
+  return {
+    id: supabaseData.id,
+    name: supabaseData.name,
+    phone: supabaseData.phone,
+    idType: supabaseData.id_type || 'V',
+    idNumber: supabaseData.id_number || '',
+    cedula: supabaseData.cedula || null,
+    document: supabaseData.document || supabaseData.cedula || null,
+    code: supabaseData.code || '',
+    stamps: supabaseData.stamps || 0,
+    rewards: supabaseData.rewards || 0,
+    totalPurchases: supabaseData.total_purchases || 0,
+    rewardsEarned: supabaseData.rewards_earned || 0,
+    joinDate: supabaseData.join_date || null,
+    lastPurchase: supabaseData.last_purchase || null,
+    purchaseHistory: supabaseData.purchase_history || [],
+    history: supabaseData.history || [],
+    createdAt: supabaseData.created_at,
+    updatedAt: supabaseData.updated_at
+  };
+};
+
+/**
  * Obtener todos los clientes
  * @returns {Promise<Array>} Lista de clientes
  */
@@ -28,7 +56,9 @@ export const getAllCustomers = async () => {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    
+    // Mapear datos de Supabase a formato de aplicación
+    return (data || []).map(mapSupabaseToApp);
   } catch (error) {
     console.error('Error obteniendo clientes:', error);
     throw new Error(handleSupabaseError(error));
@@ -55,7 +85,7 @@ export const getCustomerById = async (id) => {
       .single();
 
     if (error) throw error;
-    return data;
+    return mapSupabaseToApp(data);
   } catch (error) {
     console.error('Error obteniendo cliente:', error);
     throw new Error(handleSupabaseError(error));
@@ -81,7 +111,7 @@ export const searchCustomersByPhone = async (phone) => {
       .ilike('phone', `%${phone}%`);
 
     if (error) throw error;
-    return data || [];
+    return (data || []).map(mapSupabaseToApp);
   } catch (error) {
     console.error('Error buscando clientes:', error);
     throw new Error(handleSupabaseError(error));
@@ -138,7 +168,7 @@ export const createCustomer = async (customerData) => {
       .single();
 
     if (error) throw error;
-    return data;
+    return mapSupabaseToApp(data);
   } catch (error) {
     console.error('Error creando cliente:', error);
     throw new Error(handleSupabaseError(error));
@@ -179,7 +209,7 @@ export const updateCustomer = async (id, updates) => {
       .single();
 
     if (error) throw error;
-    return data;
+    return mapSupabaseToApp(data);
   } catch (error) {
     console.error('Error actualizando cliente:', error);
     throw new Error(handleSupabaseError(error));

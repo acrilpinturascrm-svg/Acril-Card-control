@@ -113,10 +113,10 @@ const CustomerList = ({
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       result = result.filter(customer => 
-        customer.name.toLowerCase().includes(term) ||
-        customer.phone.includes(term) ||
-        customer.idNumber.includes(term) ||
-        customer.code?.toLowerCase().includes(term)
+        (customer.name || '').toLowerCase().includes(term) ||
+        (customer.phone || '').includes(term) ||
+        (customer.idNumber || '').toString().includes(term) ||
+        (customer.code || '').toLowerCase().includes(term)
       );
     }
     

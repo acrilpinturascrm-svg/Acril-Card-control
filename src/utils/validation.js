@@ -48,6 +48,44 @@ const ERROR_MESSAGES = {
 };
 
 /**
+ * Normalizar número de teléfono
+ * Elimina espacios, guiones, paréntesis y otros caracteres especiales
+ * @param {string} phone - Número de teléfono a normalizar
+ * @returns {string} Número normalizado (solo dígitos)
+ */
+export const normalizePhone = (phone) => {
+  if (!phone) return '';
+  
+  // Convertir a string y eliminar todos los caracteres no numéricos
+  const normalized = phone.toString().replace(/\D/g, '');
+  
+  return normalized;
+};
+
+/**
+ * Comparar dos números de teléfono normalizados
+ * @param {string} phone1 - Primer teléfono
+ * @param {string} phone2 - Segundo teléfono
+ * @returns {boolean} True si son iguales
+ */
+export const phonesMatch = (phone1, phone2) => {
+  const normalized1 = normalizePhone(phone1);
+  const normalized2 = normalizePhone(phone2);
+  
+  // Comparar números completos
+  if (normalized1 === normalized2) return true;
+  
+  // Comparar sin prefijo de país (últimos 10 dígitos para Venezuela)
+  if (normalized1.length >= 10 && normalized2.length >= 10) {
+    const last10_1 = normalized1.slice(-10);
+    const last10_2 = normalized2.slice(-10);
+    return last10_1 === last10_2;
+  }
+  
+  return false;
+};
+
+/**
  * Clase principal de validación
  */
 export class DataValidator {
