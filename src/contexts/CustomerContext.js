@@ -16,7 +16,7 @@ export const CustomerProvider = ({ children }) => {
   const [prefixCandidates, setPrefixCandidates] = useState([]);
   const [showPrefixFixModal, setShowPrefixFixModal] = useState(false);
 
-  // Cargar clientes desde Supabase o localStorage al inicializar
+  // Cargar clientes desde Supabase al montar el componente
   useEffect(() => {
     const loadCustomers = async () => {
       setLoading(true);
@@ -30,17 +30,34 @@ export const CustomerProvider = ({ children }) => {
           console.log('⚠️ Supabase no configurado, usando localStorage');
           const stored = localStorage.getItem('customers');
           if (stored) {
-            const customersData = JSON.parse(stored);
-            setCustomers(customersData);
+            try {
+              const customersData = JSON.parse(stored);
+              setCustomers(customersData);
+            } catch (parseError) {
+              console.error('❌ Error parseando localStorage (JSON corrupto):', parseError);
+              // Limpiar localStorage corrupto
+              localStorage.removeItem('customers');
+              setCustomers([]);
+            }
           }
         }
       } catch (error) {
         console.error('❌ Error loading customers:', error);
         // Fallback a localStorage si falla Supabase
-        const stored = localStorage.getItem('customers');
-        if (stored) {
-          const customersData = JSON.parse(stored);
-          setCustomers(customersData);
+        try {
+          const stored = localStorage.getItem('customers');
+          if (stored) {
+            const customersData = JSON.parse(stored);
+            setCustomers(customersData);
+            console.log('⚠️ Usando datos de localStorage como fallback');
+          } else {
+            setCustomers([]);
+          }
+        } catch (fallbackError) {
+          console.error('❌ Error en fallback a localStorage:', fallbackError);
+          // Si el fallback también falla, limpiar y empezar de cero
+          localStorage.removeItem('customers');
+          setCustomers([]);
         }
       } finally {
         setLoading(false);

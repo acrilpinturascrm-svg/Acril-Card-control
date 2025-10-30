@@ -39,6 +39,35 @@ const mapSupabaseToApp = (supabaseData) => {
 };
 
 /**
+ * Mapear datos de aplicación (camelCase) a formato de Supabase (snake_case)
+ */
+const mapAppToSupabase = (appData) => {
+  if (!appData) return {};
+  
+  const supabaseData = {};
+  
+  // Mapear solo los campos que están presentes en appData
+  if (appData.name !== undefined) supabaseData.name = appData.name;
+  if (appData.phone !== undefined) supabaseData.phone = appData.phone;
+  if (appData.idType !== undefined) supabaseData.id_type = appData.idType;
+  if (appData.idNumber !== undefined) supabaseData.id_number = appData.idNumber;
+  if (appData.cedula !== undefined) supabaseData.cedula = appData.cedula;
+  if (appData.document !== undefined) supabaseData.document = appData.document;
+  if (appData.code !== undefined) supabaseData.code = appData.code;
+  if (appData.stamps !== undefined) supabaseData.stamps = appData.stamps;
+  if (appData.rewards !== undefined) supabaseData.rewards = appData.rewards;
+  if (appData.totalPurchases !== undefined) supabaseData.total_purchases = appData.totalPurchases;
+  if (appData.rewardsEarned !== undefined) supabaseData.rewards_earned = appData.rewardsEarned;
+  if (appData.joinDate !== undefined) supabaseData.join_date = appData.joinDate;
+  if (appData.lastPurchase !== undefined) supabaseData.last_purchase = appData.lastPurchase;
+  if (appData.purchaseHistory !== undefined) supabaseData.purchase_history = appData.purchaseHistory;
+  if (appData.history !== undefined) supabaseData.history = appData.history;
+  if (appData.redeemedRewards !== undefined) supabaseData.redeemed_rewards = appData.redeemedRewards;
+  
+  return supabaseData;
+};
+
+/**
  * Obtener todos los clientes
  * @returns {Promise<Array>} Lista de clientes
  */
@@ -198,10 +227,19 @@ export const updateCustomer = async (id, updates) => {
       return customers[index];
     }
 
+    // ✅ Mapear datos de camelCase a snake_case antes de enviar a Supabase
+    const supabaseUpdates = mapAppToSupabase(updates);
+    
+    console.log('🔍 DEBUG updateCustomer - Datos a actualizar:', {
+      id,
+      updatesRecibidos: updates,
+      supabaseUpdates
+    });
+
     const { data, error } = await supabase
       .from(CUSTOMERS_TABLE)
       .update({
-        ...updates,
+        ...supabaseUpdates,
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
@@ -209,6 +247,8 @@ export const updateCustomer = async (id, updates) => {
       .single();
 
     if (error) throw error;
+    
+    console.log('✅ Cliente actualizado en Supabase:', data.id);
     return mapSupabaseToApp(data);
   } catch (error) {
     console.error('Error actualizando cliente:', error);

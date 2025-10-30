@@ -42,7 +42,6 @@ const usePassiveScroll = (ref, handler) => {
 
 const LoyaltyCardSystem = ({
   customers = [],
-  setCustomers,
   stampsPerReward: initialStampsPerReward = 10,
   setStampsPerReward: setStampsPerRewardProp,
   prefixCandidates = [],
@@ -58,7 +57,9 @@ const LoyaltyCardSystem = ({
   // Obtener funciones del contexto
   const { 
     addCustomer: addCustomerFromContext,
-    deleteCustomer: deleteCustomerFromContext 
+    deleteCustomer: deleteCustomerFromContext,
+    updateCustomer,
+    setCustomers  // ✅ Obtener del contexto en lugar de prop
   } = useCustomers();
   
   // Estados locales
@@ -97,97 +98,12 @@ const LoyaltyCardSystem = ({
   // Contexto de notificaciones
   const { showError, showSuccess, showWarning } = useNotification();
 
-  // Función para manejar los datos importados desde JSON
-  const handleJsonImported = useCallback(async (jsonData) => {
-    try {
-      console.log('🔍 DEBUG Datos importados:', jsonData);
-
-      let clientsToImport = [];
-
-      // Verificar si los datos son un array o si tienen una propiedad 'customers'
-      if (Array.isArray(jsonData)) {
-        clientsToImport = jsonData;
-      } else if (jsonData.customers && Array.isArray(jsonData.customers)) {
-        clientsToImport = jsonData.customers;
-      } else if (typeof jsonData === 'object' && jsonData !== null) {
-        clientsToImport = [jsonData];
-      } else {
-        throw new Error('Formato de archivo no reconocido');
-      }
-
-      if (clientsToImport.length === 0) {
-        showError('No se encontraron clientes para importar');
-        return;
-      }
-
-      console.log(`📦 Importando ${clientsToImport.length} clientes a Supabase...`);
-      
-      let imported = 0;
-      let skipped = 0;
-      let errors = 0;
-
-      // Importar cada cliente usando addCustomer del contexto
-      for (const client of clientsToImport) {
-        try {
-          // Verificar si el cliente ya existe por teléfono
-          const exists = customers.find(c => c.phone === client.phone);
-          if (exists) {
-            console.log(`⏭️ Cliente ya existe: ${client.name}`);
-            skipped++;
-            continue;
-          }
-
-          // Preparar datos del cliente con mapeo flexible
-          // Extraer idType e idNumber de cedula si existe
-          let idType = client.idType || 'V';
-          let idNumber = client.idNumber || '';
-          
-          if (client.cedula && !client.idNumber) {
-            // Parsear cedula formato "V-12345678" o "V12345678"
-            const cedulaMatch = client.cedula.match(/^([VEJPG])-?(\d+)$/i);
-            if (cedulaMatch) {
-              idType = cedulaMatch[1].toUpperCase();
-              idNumber = cedulaMatch[2];
-            }
-          }
-          
-          const clientData = {
-            name: client.name || client.nombre || 'Cliente sin nombre',
-            phone: client.phone || client.telefono || client.tel || '',
-            idType: idType,
-            idNumber: idNumber,
-            cedula: client.cedula || `${idType}-${idNumber}`,
-            code: client.code || client.codigo || '',
-            stamps: parseInt(client.stamps || client.sellos || 0),
-            totalPurchases: client.totalPurchases || client.comprasTotales || 0,
-            rewardsEarned: client.rewardsEarned || client.premiosGanados || 0,
-            purchaseHistory: client.purchaseHistory || client.historialCompras || client.history || [],
-            joinDate: client.joinDate || client.fechaRegistro || client.createdAt || new Date().toISOString(),
-            lastPurchase: client.lastPurchase || client.ultimaCompra || client.updatedAt || null,
-          };
-
-          // Usar addCustomer del contexto (guarda en Supabase)
-          await addCustomerFromContext(clientData);
-          imported++;
-          console.log(`✅ Importado: ${client.name}`);
-        } catch (error) {
-          console.error(`❌ Error importando ${client.name}:`, error);
-          errors++;
-        }
-      }
-
-      // Mostrar resumen
-      const message = `Importación completada: ${imported} exitosos, ${skipped} omitidos, ${errors} errores`;
-      if (errors > 0) {
-        showWarning(message);
-      } else {
-        showSuccess(message);
-      }
-    } catch (error) {
-      console.error('❌ Error al procesar el archivo JSON:', error);
-      showError(`Error al importar datos: ${error.message}`);
-    }
-  }, [customers, addCustomerFromContext, showError, showSuccess, showWarning]);
+  // NOTA: La función handleJsonImported fue eliminada.
+  // Ahora se usa la versión más completa de MainApp.jsx que incluye:
+  // - Normalización de teléfonos con phonesMatch
+  // - Verificación en Supabase directamente
+  // - Mejor manejo de duplicados
+  // - Logs más detallados
 
   // Usar el hook de scroll pasivo para  // Efecto para manejar el scroll pasivo
   const handleScroll = useCallback(() => {
@@ -273,23 +189,16 @@ const LoyaltyCardSystem = ({
     });
   }, []);
 
-  // Efecto para cargar clientes y manejar la vista de cliente desde la URL
+  // Efecto para manejar la vista de cliente desde la URL (sin cargar desde localStorage)
   useEffect(() => {
-    const loadAndDisplayCustomer = () => {
+    const handleCustomerFromURL = () => {
       try {
-        const stored = localStorage.getItem('customers');
-        let customersData = [];
-        if (stored) {
-          customersData = JSON.parse(stored);
-        }
-        setCustomers(customersData);
-
         const urlParams = new URLSearchParams(window.location.search);
         const customerParam = urlParams.get('customer');
 
-        if (customerParam) {
+        if (customerParam && customers.length > 0) {
           // Buscar por código primero, luego por ID (retrocompatibilidad)
-          const foundCustomer = customersData.find(c => 
+          const foundCustomer = customers.find(c => 
             c.code === customerParam || c.id === customerParam
           );
           if (foundCustomer) {
@@ -301,14 +210,12 @@ const LoyaltyCardSystem = ({
           }
         }
       } catch (error) {
-        console.error('Error al cargar los datos de clientes:', error);
-        showError('Hubo un error al cargar los datos.');
-        setCustomers([]);
+        console.error('Error al procesar URL:', error);
       }
     };
 
-    loadAndDisplayCustomer();
-  }, [showError, setCustomers]);
+    handleCustomerFromURL();
+  }, [customers, showError]);
 
   // Background sync deshabilitado hasta implementar cola offline
 
@@ -476,152 +383,158 @@ const addCustomer = useCallback(async () => {
   }
 }, [newCustomer, customers, generateCustomerCode, showSuccess, showError, validateCustomer, setCustomers]);
 
-  // Función para agregar un sello - versión simplificada
-  const addStamp = useCallback((customerId, purchaseAmount = 0) => {
+  // Función para agregar un sello - usando updateCustomer del contexto
+  const addStamp = useCallback(async (customerId, purchaseAmount = 0) => {
     setLoading(true);
     try {
-      setCustomers(prev => {
-        const updated = prev.map(customer => {
-          if (customer.id === customerId) {
-            const newStamps = Math.max(0, (customer.stamps || 0) + 1);
-            const newRewards = Math.floor(newStamps / stampsPerReward);
-
-            const purchase = {
-              id: Date.now() + Math.random(),
-              date: new Date().toISOString(),
-              amount: purchaseAmount,
-              stampNumber: newStamps
-            };
-
-            const updatedCustomer = {
-              ...customer,
-              stamps: newStamps,
-              totalPurchases: customer.totalPurchases + 1,
-              lastPurchase: new Date().toISOString(),
-              rewardsEarned: newRewards,
-              purchaseHistory: [...customer.purchaseHistory, purchase]
-            };
-
-            // Actualizar cliente seleccionado si es el mismo
-            if (selectedCustomer?.id === customerId) {
-              setSelectedCustomer(updatedCustomer);
-            }
-
-            return updatedCustomer;
-          }
-          return customer;
-        });
-
-        // Guardar en localStorage
-        localStorage.setItem('customers', JSON.stringify(updated));
-        return updated;
-      });
-
-      // Notificar si está cerca de un premio
-      const currentCustomer = customers.find(c => c.id === customerId);
-      if (currentCustomer) {
-        const sellosFaltantes = stampsPerReward - ((currentCustomer.stamps + 1) % stampsPerReward);
-        if (sellosFaltantes === 1) {
-          showWarning('¡Estás a 1 sello del premio!');
-        } else if (sellosFaltantes <= 3 && sellosFaltantes > 0) {
-          showSuccess(`¡Solo faltan ${sellosFaltantes} sellos para tu premio!`);
-        }
+      const customer = customers.find(c => c.id === customerId);
+      if (!customer) {
+        throw new Error('Cliente no encontrado');
       }
 
-      showSuccess('Sello agregado exitosamente');
+      const newStamps = Math.max(0, (customer.stamps || 0) + 1);
+      const newRewards = Math.floor(newStamps / stampsPerReward);
+
+      const purchase = {
+        id: Date.now() + Math.random(),
+        date: new Date().toISOString(),
+        amount: purchaseAmount,
+        stampNumber: newStamps
+      };
+
+      // ✅ Usar updateCustomer del contexto (sincroniza con Supabase)
+      await updateCustomer(customerId, {
+        stamps: newStamps,
+        totalPurchases: (customer.totalPurchases || 0) + 1,
+        lastPurchase: new Date().toISOString(),
+        rewardsEarned: newRewards,
+        purchaseHistory: [...(customer.purchaseHistory || []), purchase]
+      });
+
+      // Actualizar cliente seleccionado si es el mismo
+      if (selectedCustomer?.id === customerId) {
+        const updatedCustomer = {
+          ...customer,
+          stamps: newStamps,
+          totalPurchases: (customer.totalPurchases || 0) + 1,
+          lastPurchase: new Date().toISOString(),
+          rewardsEarned: newRewards,
+          purchaseHistory: [...(customer.purchaseHistory || []), purchase]
+        };
+        setSelectedCustomer(updatedCustomer);
+      }
+
+      // Notificar si está cerca de un premio
+      const sellosFaltantes = stampsPerReward - (newStamps % stampsPerReward);
+      if (sellosFaltantes === 1) {
+        showWarning('¡Estás a 1 sello del premio!');
+      } else if (sellosFaltantes <= 3 && sellosFaltantes > 0) {
+        showSuccess(`¡Solo faltan ${sellosFaltantes} sellos para tu premio!`);
+      } else {
+        showSuccess('Sello agregado exitosamente');
+      }
     } catch (error) {
+      console.error('Error al agregar sello:', error);
       showError('Error al agregar sello');
     } finally {
       setLoading(false);
     }
-  }, [stampsPerReward, selectedCustomer, showSuccess, showError, customers, setCustomers]);
+  }, [stampsPerReward, selectedCustomer, showSuccess, showError, showWarning, customers, updateCustomer]);
 
-  // Función para quitar un sello - versión simplificada
-  const removeStamp = useCallback((customerId) => {
+  // Función para quitar un sello - usando updateCustomer del contexto
+  const removeStamp = useCallback(async (customerId) => {
     setLoading(true);
     try {
-      setCustomers(prev => {
-        const updated = prev.map(customer => {
-          if (customer.id === customerId && customer.stamps > 0) {
-            const newStamps = Math.max(0, (customer.stamps || 0) - 1);
-            const newRewards = Math.floor(newStamps / stampsPerReward);
+      const customer = customers.find(c => c.id === customerId);
+      if (!customer) {
+        throw new Error('Cliente no encontrado');
+      }
 
-            const updatedCustomer = {
-              ...customer,
-              stamps: newStamps,
-              totalPurchases: Math.max(0, customer.totalPurchases - 1),
-              rewardsEarned: newRewards,
-              purchaseHistory: customer.purchaseHistory.slice(0, -1)
-            };
+      if (customer.stamps <= 0) {
+        showWarning('El cliente no tiene sellos para quitar');
+        return;
+      }
 
-            // Actualizar cliente seleccionado si es el mismo
-            if (selectedCustomer?.id === customerId) {
-              setSelectedCustomer(updatedCustomer);
-            }
+      const newStamps = Math.max(0, (customer.stamps || 0) - 1);
+      const newRewards = Math.floor(newStamps / stampsPerReward);
 
-            return updatedCustomer;
-          }
-          return customer;
-        });
-
-        // Guardar en localStorage
-        localStorage.setItem('customers', JSON.stringify(updated));
-        return updated;
+      // ✅ Usar updateCustomer del contexto (sincroniza con Supabase)
+      await updateCustomer(customerId, {
+        stamps: newStamps,
+        totalPurchases: Math.max(0, (customer.totalPurchases || 0) - 1),
+        rewardsEarned: newRewards,
+        purchaseHistory: (customer.purchaseHistory || []).slice(0, -1)
       });
+
+      // Actualizar cliente seleccionado si es el mismo
+      if (selectedCustomer?.id === customerId) {
+        const updatedCustomer = {
+          ...customer,
+          stamps: newStamps,
+          totalPurchases: Math.max(0, (customer.totalPurchases || 0) - 1),
+          rewardsEarned: newRewards,
+          purchaseHistory: (customer.purchaseHistory || []).slice(0, -1)
+        };
+        setSelectedCustomer(updatedCustomer);
+      }
 
       showSuccess('Sello eliminado correctamente');
     } catch (error) {
+      console.error('Error al quitar sello:', error);
       showError('Error al quitar sello');
     } finally {
       setLoading(false);
     }
-  }, [stampsPerReward, selectedCustomer, showSuccess, showError, setCustomers]);
+  }, [stampsPerReward, selectedCustomer, showSuccess, showError, showWarning, customers, updateCustomer]);
 
-  // Función para canjear premio - versión simplificada
-  const redeemReward = useCallback((customerId) => {
+  // Función para canjear premio - usando updateCustomer del contexto
+  const redeemReward = useCallback(async (customerId) => {
     setLoading(true);
     try {
-      setCustomers(prev => {
-        const updated = prev.map(customer => {
-          if (customer.id === customerId && customer.stamps >= stampsPerReward) {
-            const newStamps = Math.max(0, (customer.stamps || 0) - stampsPerReward);
-            const updatedCustomer = {
-              ...customer,
-              stamps: newStamps,
-              rewardsEarned: Math.floor(newStamps / stampsPerReward),
-              redeemedRewards: [
-                ...(customer.redeemedRewards || []),
-                {
-                  id: Date.now() + Math.random(),
-                  date: new Date().toISOString(),
-                  stampsUsed: stampsPerReward,
-                  rewardType: 'Premio estándar'
-                }
-              ]
-            };
+      const customer = customers.find(c => c.id === customerId);
+      if (!customer) {
+        throw new Error('Cliente no encontrado');
+      }
 
-            // Actualizar cliente seleccionado si es el mismo
-            if (selectedCustomer?.id === customerId) {
-              setSelectedCustomer(updatedCustomer);
-            }
+      if (customer.stamps < stampsPerReward) {
+        showWarning(`Se necesitan ${stampsPerReward} sellos para canjear un premio`);
+        return;
+      }
 
-            return updatedCustomer;
-          }
-          return customer;
-        });
+      const newStamps = Math.max(0, (customer.stamps || 0) - stampsPerReward);
+      const newReward = {
+        id: Date.now() + Math.random(),
+        date: new Date().toISOString(),
+        stampsUsed: stampsPerReward,
+        rewardType: 'Premio estándar'
+      };
 
-        // Guardar en localStorage
-        localStorage.setItem('customers', JSON.stringify(updated));
-        return updated;
+      // ✅ Usar updateCustomer del contexto (sincroniza con Supabase)
+      await updateCustomer(customerId, {
+        stamps: newStamps,
+        rewardsEarned: Math.floor(newStamps / stampsPerReward),
+        redeemedRewards: [...(customer.redeemedRewards || []), newReward]
       });
+
+      // Actualizar cliente seleccionado si es el mismo
+      if (selectedCustomer?.id === customerId) {
+        const updatedCustomer = {
+          ...customer,
+          stamps: newStamps,
+          rewardsEarned: Math.floor(newStamps / stampsPerReward),
+          redeemedRewards: [...(customer.redeemedRewards || []), newReward]
+        };
+        setSelectedCustomer(updatedCustomer);
+      }
 
       showSuccess('¡Premio canjeado exitosamente! Revisa el historial.');
     } catch (error) {
+      console.error('Error al canjear premio:', error);
       showError('Error al canjear premio');
     } finally {
       setLoading(false);
     }
-  }, [stampsPerReward, selectedCustomer, showSuccess, showError, setCustomers]);
+  }, [stampsPerReward, selectedCustomer, showSuccess, showError, showWarning, customers, updateCustomer]);
 
   const deleteCustomer = useCallback(async (customerId) => {
     if (window.confirm('¿Estás seguro de eliminar este cliente? Esta acción no se puede deshacer.')) {

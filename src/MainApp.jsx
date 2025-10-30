@@ -343,7 +343,6 @@ const MainApp = () => {
             <ProtectedRoute>
               <LoyaltyCardSystem
                 customers={customers}
-                setCustomers={setCustomers}
                 stampsPerReward={stampsPerReward}
                 setStampsPerReward={setStampsPerReward}
                 prefixCandidates={prefixCandidates}
