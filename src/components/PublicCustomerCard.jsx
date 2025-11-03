@@ -20,8 +20,8 @@ const PublicCustomerCard = () => {
   useEffect(() => {
     const loadCustomer = () => {
       try {
-        // Obtener parámetros de la URL
-        const customerParam = searchParams.get('customer');
+        // Obtener parámetros de la URL (soporta 'c' y 'customer' para retrocompatibilidad)
+        const customerParam = searchParams.get('c') || searchParams.get('customer');
         const encodedData = searchParams.get('data');
         
         console.log('🔍 Buscando cliente con parámetro:', customerParam);

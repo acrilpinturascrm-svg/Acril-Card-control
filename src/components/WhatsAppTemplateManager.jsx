@@ -132,7 +132,7 @@ const WhatsAppTemplateManager = ({ onTemplateSelect }) => {
     stampsPerReward: 10,
     currentStamps: 7,
     totalRewards: 1,
-    link: 'https://acrilcard.netlify.app/card?customer=CLI-001'
+    link: 'https://acrilcard.netlify.app/card?c=CLI-001'
   };
 
   // Categorías de plantillas

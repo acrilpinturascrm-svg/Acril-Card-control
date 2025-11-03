@@ -117,7 +117,7 @@ export function enviarTarjetaPorWhatsApp(telefonoCliente, nombreCliente, idClien
         }
         
         // Abrir nueva ventana y guardar referencia
-        whatsappWindow = window.open(targetUrl, 'acrilcard_whatsapp', 'noopener,noreferrer');
+        whatsappWindow = window.open(targetUrl, 'acrilcard_whatsapp');
         
         if (whatsappWindow) {
           whatsappWindow.focus();
@@ -184,24 +184,12 @@ export function enviarTarjetaPorWhatsApp(telefonoCliente, nombreCliente, idClien
       }
     }
     
-    // Construir link público con parámetros adicionales para mejor tracking
-    const linkParams = new URLSearchParams({
-      utm_source: 'whatsapp',
-      utm_medium: 'message',
-      utm_campaign: 'loyalty_card',
-      ref: 'wa'
-    });
-    
     // Usar customerCode si está disponible, sino usar idCliente como fallback
     const customerIdentifier = opciones.customerCode || idCliente;
     
     // Usar ruta /card para vista pública (no requiere autenticación)
-    // Incluir datos codificados para sistema híbrido
-    let linkTarjeta = `${base}/card?customer=${encodeURIComponent(customerIdentifier)}`;
-    if (encodedData) {
-      linkTarjeta += `&data=${encodedData}`;
-    }
-    linkTarjeta += `&${linkParams.toString()}`;
+    // Link simplificado con solo el código del cliente (parámetro corto 'c')
+    const linkTarjeta = `${base}/card?c=${encodeURIComponent(customerIdentifier)}`;
 
     // Datos del cliente para mensaje personalizado
     const sellosActuales = Number.isFinite(opciones.stamps) ? opciones.stamps : 0;
@@ -315,7 +303,7 @@ export function enviarTarjetaPorWhatsApp(telefonoCliente, nombreCliente, idClien
       }
       
       // Abrir nueva ventana y guardar referencia
-      whatsappWindow = window.open(targetUrl, 'acrilcard_whatsapp', 'noopener,noreferrer');
+      whatsappWindow = window.open(targetUrl, 'acrilcard_whatsapp');
       
       if (whatsappWindow) {
         whatsappWindow.focus();

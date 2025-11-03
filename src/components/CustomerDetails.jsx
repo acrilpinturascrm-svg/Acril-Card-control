@@ -8,6 +8,7 @@ import { enviarTarjetaPorWhatsApp } from '../utils/whatsapp';
 import { getPublicBaseUrl } from '../utils/publicUrl';
 import { getProgressPercentage } from '../utils/logic';
 import { generateCustomerLink } from '../utils/customerDataEncoder';
+import { replaceTemplateVariables } from '../utils/templateVariables';
 import WhatsAppPreviewModal from './WhatsAppPreviewModal';
 
 const CustomerStats = React.memo(({ customer, stampsPerReward }) => {
@@ -87,41 +88,73 @@ const StampControls = React.memo(({
   const [whatsappMessage, setWhatsappMessage] = useState('');
   const { showSuccess, showError } = useNotification();
   
-  // Función para generar el mensaje de WhatsApp
+  // Función para generar el mensaje de WhatsApp usando plantillas
   const generateWhatsAppMessage = useCallback(() => {
     const businessName = localStorage.getItem('whatsapp_business_name') || 'ACRIL Pinturas';
-    const sellosFaltantes = stampsPerReward - currentStamps;
-    const tienePremioPendiente = totalRewards > 0;
     const baseUrl = getPublicBaseUrl();
-    const linkTarjeta = `${baseUrl}/card?customer=${encodeURIComponent(customer.code)}`;
+    const linkTarjeta = `${baseUrl}/card?c=${encodeURIComponent(customer.code)}`;
     
-    const ahora = new Date();
-    const hora = ahora.getHours();
-    let saludo = '¡Hola';
-    if (hora >= 6 && hora < 12) saludo = '¡Buenos días';
-    else if (hora >= 12 && hora < 18) saludo = '¡Buenas tardes';
-    else saludo = '¡Buenas noches';
+    // Cargar plantillas guardadas
+    const savedTemplates = localStorage.getItem('whatsapp_templates');
+    let templates = [];
     
-    let mensaje = `${saludo} ${customer.name}! 👋\n\n`;
-    mensaje += `Gracias por visitarnos en ${businessName} 💚\n\n`;
-    mensaje += `🎯 *Tu tarjeta de fidelidad:*\n`;
-    mensaje += `📍 Sellos actuales: *${totalStamps}*\n`;
-    
-    if (tienePremioPendiente) {
-      mensaje += `🎁 ¡Tienes *${totalRewards}* premio${totalRewards > 1 ? 's' : ''} disponible${totalRewards > 1 ? 's' : ''}!\n`;
+    if (savedTemplates) {
+      try {
+        templates = JSON.parse(savedTemplates);
+      } catch (error) {
+        console.error('Error al cargar plantillas:', error);
+      }
     }
     
-    if (currentStamps > 0) {
-      mensaje += `⭐ En tu tarjeta actual: ${currentStamps}/${stampsPerReward}\n`;
-      mensaje += `🎯 Te faltan *${sellosFaltantes}* sellos para tu próximo premio\n`;
-    } else if (!tienePremioPendiente) {
-      mensaje += `🎯 Necesitas ${stampsPerReward} sellos para tu primer premio\n`;
+    // Seleccionar plantilla según el contexto
+    let selectedTemplate;
+    const isNewCustomer = totalStamps === 0;
+    const hasReward = totalRewards > 0;
+    const isAtDiscount = currentStamps === 5 || currentStamps === 7;
+    
+    if (isNewCustomer) {
+      // Cliente nuevo - usar plantilla de bienvenida
+      selectedTemplate = templates.find(t => t.id === 'welcome');
+    } else if (hasReward) {
+      // Tiene premio completo - usar plantilla de premio completo
+      selectedTemplate = templates.find(t => t.id === 'reward_complete');
+    } else if (isAtDiscount) {
+      // Está en posición de descuento - usar plantilla de descuento
+      selectedTemplate = templates.find(t => t.id === 'discount_5_7');
+    } else {
+      // Compra recurrente - usar plantilla de compra
+      selectedTemplate = templates.find(t => t.id === 'stamps_added');
     }
     
-    mensaje += `\n📱 *Ver tu tarjeta completa:*\n${linkTarjeta}\n\n`;
-    mensaje += `¡Sigue acumulando sellos y obtén más premios! 🎉`;
+    // Si no hay plantilla guardada, usar mensaje por defecto
+    if (!selectedTemplate) {
+      // Fallback al mensaje básico
+      const sellosFaltantes = stampsPerReward - currentStamps;
+      let mensaje = `¡Hola ${customer.name}! 👋\n\n`;
+      mensaje += `En Acril premiamos tu fidelidad, por eso le compartimos su avance de la tarjeta Acrilcard que por cada compra en tienda tendrá en su progreso una serie de descuentos del 5% para todos nuestros productos en los puestos 5 y 7 y en el puesto 10 un 5% + obsequio, que la disfrute al máximo, y además, ya contamos con Cashea, somos Acril economía de lujo!\n\n`;
+      mensaje += `🎯 Tu tarjeta de fidelidad:\n`;
+      mensaje += `📍 Sellos actuales: ${totalStamps}\n`;
+      if (currentStamps > 0) {
+        mensaje += `⭐ En tu tarjeta actual: ${currentStamps}/${stampsPerReward}\n`;
+        mensaje += `🎯 Te faltan ${sellosFaltantes} sellos para tu próximo premio\n`;
+      }
+      mensaje += `\n📱 Ver tu tarjeta completa:\n${linkTarjeta}\n\n`;
+      mensaje += `¡Sigue acumulando sellos! 🎉`;
+      return mensaje;
+    }
     
-    return mensaje;
+    // Usar plantilla con reemplazo de variables
+    const templateData = {
+      customerName: customer.name,
+      businessName: businessName,
+      totalStamps: totalStamps,
+      stampsPerReward: stampsPerReward,
+      currentStamps: currentStamps,
+      totalRewards: totalRewards,
+      link: linkTarjeta
+    };
+    
+    return replaceTemplateVariables(selectedTemplate.message, templateData);
   }, [customer, currentStamps, totalStamps, totalRewards, stampsPerReward]);
 
   const handleAddStamp = useCallback(() => {
@@ -279,7 +312,7 @@ const StampControls = React.memo(({
           stampsPerReward: stampsPerReward,
           currentStamps: currentStamps,
           totalRewards: totalRewards,
-          link: `${getPublicBaseUrl()}/card?customer=${encodeURIComponent(customer.code)}`
+          link: `${getPublicBaseUrl()}/card?c=${encodeURIComponent(customer.code)}`
         }}
       />
     </div>

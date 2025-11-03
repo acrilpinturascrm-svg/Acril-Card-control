@@ -87,26 +87,18 @@ export function decodeCustomerData(encodedData) {
 }
 
 /**
- * Genera un enlace completo con datos del cliente codificados
+ * Genera un enlace completo simplificado con el código del cliente
  * @param {string} baseUrl - URL base de la aplicación
  * @param {Object} customer - Objeto del cliente
- * @returns {string} - URL completa con datos codificados
+ * @returns {string} - URL completa simplificada
  */
 export function generateCustomerLink(baseUrl, customer) {
   try {
-    const encodedData = encodeCustomerData(customer);
-    
-    if (!encodedData) {
-      // Fallback: usar solo el código del cliente
-      return `${baseUrl}/card?customer=${encodeURIComponent(customer.code)}`;
-    }
-
-    // Incluir tanto el código como los datos codificados
-    // El código permite búsqueda en Supabase, los datos son fallback
-    return `${baseUrl}/card?customer=${encodeURIComponent(customer.code)}&data=${encodedData}`;
+    // Link simplificado con solo el código del cliente (parámetro corto 'c')
+    return `${baseUrl}/card?c=${encodeURIComponent(customer.code)}`;
   } catch (error) {
     console.error('Error al generar enlace del cliente:', error);
     // Fallback seguro
-    return `${baseUrl}/card?customer=${encodeURIComponent(customer.code)}`;
+    return `${baseUrl}/card?c=${encodeURIComponent(customer.code || customer.id)}`;
   }
 }
