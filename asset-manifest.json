@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/Acril-Card-control/static/css/main.7a36f083.css",
-    "main.js": "/Acril-Card-control/static/js/main.f68401ba.js",
+    "main.js": "/Acril-Card-control/static/js/main.e7e335c7.js",
     "index.html": "/Acril-Card-control/index.html",
     "main.7a36f083.css.map": "/Acril-Card-control/static/css/main.7a36f083.css.map",
-    "main.f68401ba.js.map": "/Acril-Card-control/static/js/main.f68401ba.js.map"
+    "main.e7e335c7.js.map": "/Acril-Card-control/static/js/main.e7e335c7.js.map"
   },
   "entrypoints": [
     "static/css/main.7a36f083.css",
-    "static/js/main.f68401ba.js"
+    "static/js/main.e7e335c7.js"
   ]
 }
