@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Send, Edit2, MessageCircle, Phone, User, Copy, Check, FileText, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from './common';
 import { replaceTemplateVariables, trackTemplateUsage } from '../utils/templateVariables';
+import { getAllTemplates } from '../utils/whatsappTemplates';
 
 /**
  * Modal de vista previa para mensajes de WhatsApp
@@ -25,52 +26,23 @@ const WhatsAppPreviewModal = ({
   const [showTemplates, setShowTemplates] = useState(false);
   const [templates, setTemplates] = useState([]);
 
-  // Plantillas predeterminadas
-  const defaultTemplates = [
-    {
-      id: 'welcome',
-      name: 'Bienvenida',
-      category: 'welcome',
-      icon: '👋',
-      message: `¡Hola {nombre}! 👋\n\nBienvenido a {negocio} 💚\n\nAcabas de unirte a nuestro programa de fidelidad. Por cada compra, acumulas sellos y obtienes premios increíbles.\n\n🎯 Tu tarjeta de fidelidad:\n📍 Sellos actuales: {sellos}\n🎁 Necesitas {stampsPerReward} sellos para tu primer premio\n\n📱 Ver tu tarjeta completa:\n{link}\n\n¡Gracias por elegirnos! 🎉`
-    },
-    {
-      id: 'stamps_added',
-      name: 'Sellos Agregados',
-      category: 'purchase',
-      icon: '🛍️',
-      message: `¡Hola {nombre}! 👋\n\nGracias por tu compra en {negocio} 💚\n\n🎯 Tu tarjeta de fidelidad:\n📍 Sellos actuales: {sellos}\n⭐ En tu tarjeta actual: {sellosEnTarjeta}/{stampsPerReward}\n🎯 Te faltan {sellosFaltantes} sellos para tu próximo premio\n\n📱 Ver tu tarjeta completa:\n{link}\n\n¡Sigue acumulando sellos! 🎉`
-    },
-    {
-      id: 'reward_available',
-      name: 'Premio Disponible',
-      category: 'reward',
-      icon: '🎁',
-      message: `¡Hola {nombre}! 🎉\n\n¡FELICIDADES! Has completado tu tarjeta de fidelidad en {negocio} 💚\n\n🎁 Tienes {premios} premio(s) disponible(s) para canjear\n\nPasa por nuestra tienda para reclamar tu premio.\n\n📱 Ver tu tarjeta:\n{link}\n\n¡Gracias por tu preferencia! ⭐`
-    },
-    {
-      id: 'reminder',
-      name: 'Recordatorio',
-      category: 'reminder',
-      icon: '⏰',
-      message: `¡Hola {nombre}! 👋\n\nTe extrañamos en {negocio} 💚\n\nTienes {sellos} sellos acumulados. ¡Estás cerca de tu próximo premio!\n\n🎯 Solo te faltan {sellosFaltantes} sellos más\n\n📱 Ver tu tarjeta:\n{link}\n\n¡Esperamos verte pronto! 🎉`
-    }
-  ];
+  // Función para obtener icono según categoría
+  const getCategoryIcon = (category) => {
+    const icons = {
+      'welcome': '👋',
+      'purchase': '🛍️',
+      'discount': '💰',
+      'reward': '🎁',
+      'reminder': '⏰',
+      'custom': '✨'
+    };
+    return icons[category] || '📝';
+  };
 
-  // Cargar plantillas personalizadas del localStorage
+  // Cargar plantillas del sistema centralizado
   useEffect(() => {
-    const savedTemplates = localStorage.getItem('whatsapp_templates');
-    if (savedTemplates) {
-      try {
-        const parsed = JSON.parse(savedTemplates);
-        setTemplates([...defaultTemplates, ...parsed]);
-      } catch (error) {
-        console.error('Error al cargar plantillas:', error);
-        setTemplates(defaultTemplates);
-      }
-    } else {
-      setTemplates(defaultTemplates);
-    }
+    const loadedTemplates = getAllTemplates();
+    setTemplates(loadedTemplates);
   }, []);
 
   useEffect(() => {
@@ -205,8 +177,13 @@ const WhatsAppPreviewModal = ({
                     className="text-left p-3 bg-white rounded-lg border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-50 transition-all"
                   >
                     <div className="flex items-center space-x-2 mb-1">
-                      <span className="text-xl">{template.icon}</span>
+                      <span className="text-xl">{getCategoryIcon(template.category)}</span>
                       <span className="font-medium text-gray-900 text-sm">{template.name}</span>
+                      {template.isDefault && (
+                        <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+                          Predeterminada
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs text-gray-600 line-clamp-2">
                       {template.message.substring(0, 60)}...
