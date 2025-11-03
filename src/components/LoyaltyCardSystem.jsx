@@ -5,6 +5,7 @@ import { InputAdornment, Fade } from '@mui/material';
 // Importar componentes comunes
 import { InputField, Button, EnhancedCustomerForm } from './common';
 import CustomerList from './CustomerList';
+import WhatsAppPreviewModal from './WhatsAppPreviewModal';
 import { enviarTarjetaPorWhatsApp } from '../utils/whatsapp';
 
 // Importar contextos
@@ -16,6 +17,8 @@ import { deleteCustomerRecord as pbDeleteCustomerRecord } from '../services/cust
 // Importar utilidades de lógica de negocio
 import { generateCustomerCode, digitsOnly, normalizeStr, getProgressPercentage } from '../utils/logic';
 import { getPublicBaseUrl } from '../utils/publicUrl';
+import { getAllTemplates } from '../utils/whatsappTemplates';
+import { replaceTemplateVariables } from '../utils/templateVariables';
 
 // Hook personalizado para manejar eventos de scroll con passive: true
 const usePassiveScroll = (ref, handler) => {
@@ -77,6 +80,10 @@ const LoyaltyCardSystem = ({
   const [currentView, setCurrentView] = useState('admin');
   const [clientViewCustomer, setClientViewCustomer] = useState(null);
   const [showClientView, setShowClientView] = useState(false);
+  
+  // Estados para el modal de WhatsApp
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const [whatsappMessage, setWhatsappMessage] = useState('');
 
   // Referencias
   const historyContainerRef = useRef(null);
@@ -700,6 +707,130 @@ const addCustomer = useCallback(async () => {
     }
   }, [showSuccess, showError]);
 
+  // Función para generar el mensaje de WhatsApp usando plantillas
+  const generateWhatsAppMessage = useCallback((customer) => {
+    const businessName = localStorage.getItem('whatsapp_business_name') || 'ACRIL Pinturas';
+    const baseUrl = getPublicBaseUrl();
+    const linkTarjeta = `${baseUrl}/card?c=${encodeURIComponent(customer.code)}`;
+    
+    const totalStamps = customer.stamps || 0;
+    const currentStamps = totalStamps % stampsPerReward;
+    const totalRewards = Math.floor(totalStamps / stampsPerReward);
+    
+    // Cargar plantillas usando el sistema centralizado
+    const templates = getAllTemplates();
+    console.log('📋 Total plantillas cargadas:', templates.length);
+    console.log('📋 IDs de plantillas:', templates.map(t => t.id));
+    
+    // Seleccionar plantilla según el contexto
+    let selectedTemplate;
+    const isNewCustomer = totalStamps === 0;
+    const hasReward = totalRewards > 0;
+    const isAtDiscount = currentStamps === 5 || currentStamps === 7;
+    
+    console.log('🔍 Contexto del cliente:', {
+      totalStamps,
+      currentStamps,
+      totalRewards,
+      isNewCustomer,
+      hasReward,
+      isAtDiscount
+    });
+    
+    if (isNewCustomer) {
+      selectedTemplate = templates.find(t => t.id === 'welcome');
+      console.log('🎯 Selección: Cliente nuevo -> Plantilla Bienvenida');
+    } else if (hasReward) {
+      selectedTemplate = templates.find(t => t.id === 'reward_complete');
+      console.log('🎯 Selección: Premio completo -> Plantilla Premio');
+    } else if (isAtDiscount) {
+      selectedTemplate = templates.find(t => t.id === 'discount_5_7');
+      console.log('🎯 Selección: Descuento -> Plantilla Descuento 5%');
+    } else {
+      selectedTemplate = templates.find(t => t.id === 'stamps_added');
+      console.log('🎯 Selección: Compra recurrente -> Plantilla Compra');
+    }
+    
+    console.log('✅ Plantilla seleccionada:', selectedTemplate ? selectedTemplate.name : 'NINGUNA');
+    
+    // Si no hay plantilla, usar mensaje por defecto
+    if (!selectedTemplate) {
+      const sellosFaltantes = stampsPerReward - currentStamps;
+      let mensaje = `¡Hola ${customer.name}! 👋\n\n`;
+      mensaje += `En Acril premiamos tu fidelidad, por eso le compartimos su avance de la tarjeta Acrilcard que por cada compra en tienda tendrá en su progreso una serie de descuentos del 5% para todos nuestros productos en los puestos 5 y 7 y en el puesto 10 un 5% + obsequio, que la disfrute al máximo, y además, ya contamos con Cashea, somos Acril economía de lujo!\n\n`;
+      mensaje += `🎯 Tu tarjeta de fidelidad:\n`;
+      mensaje += `📍 Sellos actuales: ${totalStamps}\n`;
+      if (currentStamps > 0) {
+        mensaje += `⭐ En tu tarjeta actual: ${currentStamps}/${stampsPerReward}\n`;
+        mensaje += `🎯 Te faltan ${sellosFaltantes} sellos para tu próximo premio\n`;
+      }
+      mensaje += `\n📱 Ver tu tarjeta completa:\n${linkTarjeta}\n\n`;
+      mensaje += `¡Sigue acumulando sellos! 🎉`;
+      return mensaje;
+    }
+    
+    // Usar plantilla con reemplazo de variables
+    const sellosFaltantes = stampsPerReward - currentStamps;
+    const templateData = {
+      nombre: customer.name,
+      customerName: customer.name,
+      negocio: businessName,
+      businessName: businessName,
+      sellos: totalStamps,
+      totalStamps: totalStamps,
+      stampsPerReward: stampsPerReward,
+      sellosEnTarjeta: currentStamps,
+      currentStamps: currentStamps,
+      sellosFaltantes: sellosFaltantes,
+      premios: totalRewards,
+      totalRewards: totalRewards,
+      link: linkTarjeta,
+      posicion: currentStamps
+    };
+    
+    console.log('📝 Datos para reemplazo:', templateData);
+    const finalMessage = replaceTemplateVariables(selectedTemplate.message, templateData);
+    console.log('✅ Mensaje final generado:', finalMessage.substring(0, 100) + '...');
+    
+    return finalMessage;
+  }, [stampsPerReward]);
+
+  // Manejar apertura del modal de WhatsApp
+  const handleWhatsAppClick = useCallback((customer) => {
+    const message = generateWhatsAppMessage(customer);
+    setWhatsappMessage(message);
+    setShowWhatsAppModal(true);
+  }, [generateWhatsAppMessage]);
+
+  // Manejar envío de WhatsApp
+  const handleSendWhatsApp = useCallback(async (finalMessage) => {
+    try {
+      if (!selectedCustomer) return;
+      
+      const result = enviarTarjetaPorWhatsApp(
+        selectedCustomer.phone || '',
+        selectedCustomer.name || '',
+        selectedCustomer.id || '',
+        {
+          sellos: (selectedCustomer.stamps || 0) % stampsPerReward,
+          stamps: selectedCustomer.stamps || 0,
+          stampsPerReward: stampsPerReward,
+          purchaseHistory: selectedCustomer.purchaseHistory || [],
+          customMessage: finalMessage,
+          customerCode: selectedCustomer.code
+        }
+      );
+      
+      if (result) {
+        showSuccess('Mensaje de WhatsApp enviado');
+        setShowWhatsAppModal(false);
+      }
+    } catch (error) {
+      console.error('Error al enviar WhatsApp:', error);
+      showError('Error al enviar mensaje de WhatsApp');
+    }
+  }, [selectedCustomer, stampsPerReward, showSuccess, showError]);
+
   // Manejo de eventos de teclado para accesibilidad
   const handleKeyPress = useCallback((e, callback) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -980,19 +1111,7 @@ const addCustomer = useCallback(async () => {
                       )}
                       <Button
                         variant="outline"
-                        onClick={() => enviarTarjetaPorWhatsApp(
-                          selectedCustomer?.phone || '',
-                          selectedCustomer?.name || '',
-                          selectedCustomer?.id || '',
-                          {
-                            sellos: (selectedCustomer?.stamps || 0) % stampsPerReward,
-                            stamps: selectedCustomer?.stamps || 0,
-                            stampsPerReward: stampsPerReward,
-                            purchaseHistory: selectedCustomer?.purchaseHistory || [],
-                            customerCode: selectedCustomer?.code,
-                            // baseUrl se resuelve automáticamente (env/global/origin)
-                          }
-                        )}
+                        onClick={() => handleWhatsAppClick(selectedCustomer)}
                         className="flex-1 py-3"
                         title="Enviar tarjeta por WhatsApp"
                       >
@@ -1063,6 +1182,33 @@ const addCustomer = useCallback(async () => {
           </div>
         </div>
       </div>
+
+      {/* Modal de Vista Previa de WhatsApp */}
+      <WhatsAppPreviewModal
+        isOpen={showWhatsAppModal}
+        onClose={() => setShowWhatsAppModal(false)}
+        onSend={handleSendWhatsApp}
+        customerName={selectedCustomer?.name || ''}
+        customerPhone={selectedCustomer?.phone || ''}
+        message={whatsappMessage}
+        onMessageChange={setWhatsappMessage}
+        customerData={{
+          nombre: selectedCustomer?.name || '',
+          customerName: selectedCustomer?.name || '',
+          negocio: localStorage.getItem('whatsapp_business_name') || 'ACRIL Pinturas',
+          businessName: localStorage.getItem('whatsapp_business_name') || 'ACRIL Pinturas',
+          sellos: selectedCustomer?.stamps || 0,
+          totalStamps: selectedCustomer?.stamps || 0,
+          stampsPerReward: stampsPerReward,
+          sellosEnTarjeta: (selectedCustomer?.stamps || 0) % stampsPerReward,
+          currentStamps: (selectedCustomer?.stamps || 0) % stampsPerReward,
+          sellosFaltantes: stampsPerReward - ((selectedCustomer?.stamps || 0) % stampsPerReward),
+          premios: Math.floor((selectedCustomer?.stamps || 0) / stampsPerReward),
+          totalRewards: Math.floor((selectedCustomer?.stamps || 0) / stampsPerReward),
+          link: `${getPublicBaseUrl()}/card?c=${encodeURIComponent(selectedCustomer?.code || '')}`,
+          posicion: (selectedCustomer?.stamps || 0) % stampsPerReward
+        }}
+      />
 
       {/* Vista del cliente */}
       {currentView === 'client' && clientViewCustomer && (
