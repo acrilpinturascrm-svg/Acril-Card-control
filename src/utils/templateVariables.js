@@ -26,6 +26,7 @@ export function replaceTemplateVariables(template, data) {
   // Calcular valores derivados
   const stampsNeeded = stampsPerReward - currentStamps;
   const stampsInCurrentCard = totalStamps % stampsPerReward;
+  const position = stampsInCurrentCard || stampsPerReward; // Posición actual en la tarjeta
 
   // Mapa de reemplazos
   const replacements = {
@@ -33,6 +34,7 @@ export function replaceTemplateVariables(template, data) {
     '{negocio}': businessName,
     '{sellos}': totalStamps.toString(),
     '{sellosEnTarjeta}': stampsInCurrentCard.toString(),
+    '{posicion}': position.toString(),
     '{sellosFaltantes}': stampsNeeded > 0 ? stampsNeeded.toString() : '0',
     '{stampsPerReward}': stampsPerReward.toString(),
     '{premios}': totalRewards.toString(),
@@ -82,6 +84,7 @@ export function validateTemplateVariables(template) {
     '{negocio}',
     '{sellos}',
     '{sellosEnTarjeta}',
+    '{posicion}',
     '{sellosFaltantes}',
     '{stampsPerReward}',
     '{premios}',
@@ -110,6 +113,7 @@ export function getAvailableVariables() {
     { name: '{negocio}', desc: 'Nombre del negocio', example: 'ACRIL Pinturas' },
     { name: '{sellos}', desc: 'Sellos totales', example: '15' },
     { name: '{sellosEnTarjeta}', desc: 'Sellos en tarjeta actual', example: '5' },
+    { name: '{posicion}', desc: 'Posición en la tarjeta', example: '5' },
     { name: '{sellosFaltantes}', desc: 'Sellos faltantes para premio', example: '5' },
     { name: '{stampsPerReward}', desc: 'Sellos necesarios por premio', example: '10' },
     { name: '{premios}', desc: 'Premios disponibles', example: '1' },

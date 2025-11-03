@@ -102,20 +102,26 @@ export function enviarTarjetaPorWhatsApp(telefonoCliente, nombreCliente, idClien
       }
       
       if (targetUrl) {
-        // Verificar si la ventana anterior sigue abierta
+        // Verificar si la ventana anterior sigue abierta y es válida
         if (whatsappWindow && !whatsappWindow.closed) {
-          // Reutilizar la ventana existente
-          whatsappWindow.location.href = targetUrl;
-          whatsappWindow.focus();
-          return true;
-        } else {
-          // Abrir nueva ventana y guardar referencia
-          whatsappWindow = window.open(targetUrl, 'whatsapp_window');
-          
-          if (whatsappWindow) {
+          try {
+            // Reutilizar la ventana existente
+            whatsappWindow.location.href = targetUrl;
             whatsappWindow.focus();
             return true;
+          } catch (error) {
+            // Si hay error de acceso, la ventana no es válida
+            console.warn('No se pudo reutilizar ventana de WhatsApp:', error);
+            whatsappWindow = null;
           }
+        }
+        
+        // Abrir nueva ventana y guardar referencia
+        whatsappWindow = window.open(targetUrl, 'acrilcard_whatsapp', 'noopener,noreferrer');
+        
+        if (whatsappWindow) {
+          whatsappWindow.focus();
+          return true;
         }
       }
       return false;
@@ -294,19 +300,25 @@ export function enviarTarjetaPorWhatsApp(telefonoCliente, nombreCliente, idClien
 
     // Abrir WhatsApp reutilizando la misma pestaña si ya existe
     if (targetUrl) {
-      // Verificar si la ventana anterior sigue abierta
+      // Verificar si la ventana anterior sigue abierta y es válida
       if (whatsappWindow && !whatsappWindow.closed) {
-        // Reutilizar la ventana existente
-        whatsappWindow.location.href = targetUrl;
-        whatsappWindow.focus();
-        return true;
-      } else {
-        // Abrir nueva ventana y guardar referencia
-        whatsappWindow = window.open(targetUrl, 'whatsapp_window');
-        
-        if (whatsappWindow) {
+        try {
+          // Reutilizar la ventana existente
+          whatsappWindow.location.href = targetUrl;
           whatsappWindow.focus();
+          return true;
+        } catch (error) {
+          // Si hay error de acceso, la ventana no es válida
+          console.warn('No se pudo reutilizar ventana de WhatsApp:', error);
+          whatsappWindow = null;
         }
+      }
+      
+      // Abrir nueva ventana y guardar referencia
+      whatsappWindow = window.open(targetUrl, 'acrilcard_whatsapp', 'noopener,noreferrer');
+      
+      if (whatsappWindow) {
+        whatsappWindow.focus();
       }
       
       // Verificar si se abrió correctamente
