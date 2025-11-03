@@ -122,6 +122,41 @@ export const getCustomerById = async (id) => {
 };
 
 /**
+ * Obtener un cliente por código
+ * @param {string} code - Código del cliente
+ * @returns {Promise<Object|null>} Cliente encontrado o null
+ */
+export const getCustomerByCode = async (code) => {
+  try {
+    if (!isSupabaseConfigured()) {
+      const localData = localStorage.getItem('acrilcard_customers');
+      const customers = localData ? JSON.parse(localData) : [];
+      return customers.find(c => c.code === code) || null;
+    }
+
+    const { data, error } = await supabase
+      .from(CUSTOMERS_TABLE)
+      .select('*')
+      .eq('code', code)
+      .single();
+
+    if (error) {
+      // Si no se encuentra (PGRST116), retornar null en lugar de lanzar error
+      if (error.code === 'PGRST116') {
+        console.log(`Cliente con código ${code} no encontrado en Supabase`);
+        return null;
+      }
+      throw error;
+    }
+    
+    return mapSupabaseToApp(data);
+  } catch (error) {
+    console.error('Error obteniendo cliente por código:', error);
+    return null; // Retornar null en caso de error
+  }
+};
+
+/**
  * Buscar clientes por teléfono
  * @param {string} phone - Número de teléfono
  * @returns {Promise<Array>} Clientes encontrados

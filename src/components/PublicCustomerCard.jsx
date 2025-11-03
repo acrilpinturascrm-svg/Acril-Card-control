@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Award, Star, Gift, Calendar, ShoppingBag } from 'lucide-react';
 import { decodeCustomerData } from '../utils/customerDataEncoder';
+import { getCustomerByCode } from '../services/customersService';
 
 /**
  * Componente público para mostrar la tarjeta de fidelidad del cliente
@@ -18,7 +19,7 @@ const PublicCustomerCard = () => {
   const [dataSource, setDataSource] = useState(''); // Para debugging
 
   useEffect(() => {
-    const loadCustomer = () => {
+    const loadCustomer = async () => {
       try {
         // Obtener parámetros de la URL (soporta 'c' y 'customer' para retrocompatibilidad)
         const customerParam = searchParams.get('c') || searchParams.get('customer');
@@ -82,6 +83,31 @@ const PublicCustomerCard = () => {
             return; // Éxito, salir
           } else {
             console.error('❌ No se pudo decodificar los datos de la URL');
+          }
+        }
+
+        // ESTRATEGIA 3: Buscar en Supabase (si no está en localStorage ni en URL)
+        if (customerParam) {
+          console.log('🔍 Buscando en Supabase por código:', customerParam);
+          try {
+            const supabaseCustomer = await getCustomerByCode(customerParam);
+            
+            if (supabaseCustomer) {
+              console.log('✅ Cliente encontrado en Supabase:', supabaseCustomer.name, supabaseCustomer.code);
+              setCustomer(supabaseCustomer);
+              setDataSource('Supabase');
+              
+              // Cargar configuración de sellos (usar valor por defecto si no existe)
+              const savedStamps = localStorage.getItem('stampsPerReward');
+              setStampsPerReward(savedStamps ? parseInt(savedStamps, 10) : 10);
+              
+              setLoading(false);
+              return; // Éxito, salir
+            } else {
+              console.log('⚠️ Cliente no encontrado en Supabase');
+            }
+          } catch (supabaseError) {
+            console.error('❌ Error al buscar en Supabase:', supabaseError);
           }
         }
 
