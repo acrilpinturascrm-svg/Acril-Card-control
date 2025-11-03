@@ -9,6 +9,7 @@ import { getPublicBaseUrl } from '../utils/publicUrl';
 import { getProgressPercentage } from '../utils/logic';
 import { generateCustomerLink } from '../utils/customerDataEncoder';
 import { replaceTemplateVariables } from '../utils/templateVariables';
+import { getAllTemplates } from '../utils/whatsappTemplates';
 import WhatsAppPreviewModal from './WhatsAppPreviewModal';
 
 const CustomerStats = React.memo(({ customer, stampsPerReward }) => {
@@ -94,17 +95,8 @@ const StampControls = React.memo(({
     const baseUrl = getPublicBaseUrl();
     const linkTarjeta = `${baseUrl}/card?c=${encodeURIComponent(customer.code)}`;
     
-    // Cargar plantillas guardadas
-    const savedTemplates = localStorage.getItem('whatsapp_templates');
-    let templates = [];
-    
-    if (savedTemplates) {
-      try {
-        templates = JSON.parse(savedTemplates);
-      } catch (error) {
-        console.error('Error al cargar plantillas:', error);
-      }
-    }
+    // Cargar plantillas usando el sistema centralizado (con fallback automático)
+    const templates = getAllTemplates();
     
     // Seleccionar plantilla según el contexto
     let selectedTemplate;

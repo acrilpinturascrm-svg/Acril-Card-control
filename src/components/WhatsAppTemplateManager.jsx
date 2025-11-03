@@ -7,108 +7,15 @@ import {
   replaceTemplateVariables,
   getTemplateStats 
 } from '../utils/templateVariables';
+import { 
+  getDefaultTemplates, 
+  getAllTemplates, 
+  saveTemplates as saveTemplatesToStorage, 
+  restoreDefaultTemplates 
+} from '../utils/whatsappTemplates';
 
-// Plantillas por defecto con categorías (fuera del componente para evitar recreación)
-const defaultTemplates = [
-    {
-      id: 'welcome',
-      name: 'Bienvenida',
-      description: 'Para clientes nuevos',
-      category: 'welcome',
-      message: `¡Hola {nombre}! 👋
-
-En Acril premiamos tu fidelidad, por eso le compartimos su tarjeta Acrilcard que por cada compra en tienda tendrá en su progreso una serie de descuentos del 5% para todos nuestros productos en los puestos 5 y 7 y en el puesto 10 un 5% + obsequio, que la disfrute al máximo, y además, ya contamos con Cashea, somos Acril economía de lujo!
-
-🎯 Tu tarjeta de fidelidad:
-📍 Sellos actuales: {sellos}
-🎁 Necesitas {stampsPerReward} sellos para tu primer premio
-
-📱 Ver tu tarjeta completa:
-{link}
-
-¡Gracias por elegirnos! 🎉`,
-      isDefault: true
-    },
-    {
-      id: 'stamps_added',
-      name: 'Compra Recurrente',
-      description: 'Cliente con compras previas',
-      category: 'purchase',
-      message: `¡Hola {nombre}! 👋
-
-En Acril premiamos tu fidelidad, por eso le compartimos su avance de la tarjeta Acrilcard que por cada compra en tienda tendrá en su progreso una serie de descuentos del 5% para todos nuestros productos en los puestos 5 y 7 y en el puesto 10 un 5% + obsequio, que la disfrute al máximo, y además, ya contamos con Cashea, somos Acril economía de lujo!
-
-🎯 Tu tarjeta de fidelidad:
-📍 Sellos actuales: {sellos}
-⭐ En tu tarjeta actual: {sellosEnTarjeta}/{stampsPerReward}
-🎯 Te faltan {sellosFaltantes} sellos para tu próximo premio
-
-📱 Ver tu tarjeta completa:
-{link}
-
-¡Sigue acumulando sellos! 🎉`,
-      isDefault: true
-    },
-    {
-      id: 'discount_5_7',
-      name: 'Descuento 5% (Posición 5 o 7)',
-      description: 'Cuando alcanza posición 5 o 7',
-      category: 'discount',
-      message: `¡Felicidades {nombre}! 🎉
-
-¡Has alcanzado el puesto {sellosEnTarjeta} en tu tarjeta Acrilcard!
-
-🎁 Tienes disponible un descuento del 5% en todos nuestros productos
-
-Pasa por nuestra tienda para hacer efectivo tu descuento.
-
-📱 Ver tu tarjeta:
-{link}
-
-En Acril premiamos tu fidelidad. ¡Somos Acril economía de lujo! 💚`,
-      isDefault: true
-    },
-    {
-      id: 'reward_complete',
-      name: 'Premio Completo (Posición 10)',
-      description: 'Cuando completa la tarjeta',
-      category: 'reward',
-      message: `¡FELICIDADES {nombre}! 🎉🎁
-
-¡Has completado tu tarjeta Acrilcard!
-
-🎁 Tienes disponible:
-• 5% de descuento en todos nuestros productos
-• Un obsequio especial
-
-Pasa por nuestra tienda para reclamar tu premio.
-
-📱 Ver tu tarjeta:
-{link}
-
-En Acril premiamos tu fidelidad. ¡Somos Acril economía de lujo! 💚`,
-      isDefault: true
-    },
-    {
-      id: 'reminder',
-      name: 'Recordatorio',
-      description: 'Para clientes inactivos',
-      category: 'reminder',
-      message: `¡Hola {nombre}! 👋
-
-Te extrañamos en Acril Pinturas 💚
-
-Tienes {sellos} sellos acumulados en tu tarjeta Acrilcard. ¡Estás cerca de obtener descuentos y premios!
-
-🎯 Solo te faltan {sellosFaltantes} sellos para tu próximo beneficio
-
-📱 Ver tu tarjeta:
-{link}
-
-¡Esperamos verte pronto! Somos Acril economía de lujo 🎉`,
-      isDefault: true
-    }
-  ];
+// Las plantillas predeterminadas ahora se importan desde el módulo centralizado
+// Esto evita duplicación de código y facilita el mantenimiento
 
 /**
  * Gestor de plantillas de WhatsApp - Versión Mejorada
@@ -146,35 +53,34 @@ const WhatsAppTemplateManager = ({ onTemplateSelect }) => {
     { id: 'custom', name: 'Personalizado', icon: '✨' }
   ];
 
-  // Cargar plantillas del localStorage
+  // Cargar plantillas usando el sistema centralizado
   useEffect(() => {
-    const savedTemplates = localStorage.getItem('whatsapp_templates');
-    if (savedTemplates) {
-      try {
-        const parsed = JSON.parse(savedTemplates);
-        setTemplates([...defaultTemplates, ...parsed]);
-      } catch (error) {
-        console.error('Error al cargar plantillas:', error);
-        setTemplates(defaultTemplates);
-      }
-    } else {
-      setTemplates(defaultTemplates);
-    }
+    const loadedTemplates = getAllTemplates();
+    setTemplates(loadedTemplates);
   }, []);
 
   // Guardar todas las plantillas (incluidas las editadas)
   const saveTemplates = (newTemplates) => {
-    // Guardar TODAS las plantillas para permitir edición de predeterminadas
-    localStorage.setItem('whatsapp_templates', JSON.stringify(newTemplates));
-    setTemplates(newTemplates);
+    // Usar la función centralizada para guardar
+    const success = saveTemplatesToStorage(newTemplates);
+    if (success) {
+      setTemplates(newTemplates);
+    } else {
+      console.error('Error al guardar plantillas');
+    }
   };
 
   // Restaurar plantillas predeterminadas
   const handleRestoreDefaults = () => {
     if (confirm('¿Estás seguro de restaurar las plantillas predeterminadas? Esto sobrescribirá cualquier cambio realizado.')) {
-      setTemplates(defaultTemplates);
-      localStorage.removeItem('whatsapp_templates');
-      alert('✅ Plantillas predeterminadas restauradas correctamente');
+      const success = restoreDefaultTemplates();
+      if (success) {
+        const defaultTemplates = getDefaultTemplates();
+        setTemplates(defaultTemplates);
+        alert('✅ Plantillas predeterminadas restauradas correctamente');
+      } else {
+        alert('❌ Error al restaurar plantillas');
+      }
     }
   };
 
