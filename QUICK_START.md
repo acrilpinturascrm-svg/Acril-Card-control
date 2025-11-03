@@ -1,6 +1,8 @@
 # ⚡ Quick Start: Deploy en 30 Minutos
 
-**Guía rápida para desplegar ACRILCARD con Netlify + Supabase**
+**Guía rápida para desplegar ACRILCARD con GitHub Pages + Supabase**
+
+**URL de Producción Actual:** https://acrilpinturascrm-svg.github.io/Acril-Card-control
 
 ---
 
@@ -72,7 +74,41 @@ npm start
 
 ---
 
-## 🚀 Paso 3: Deploy en Netlify (10 min)
+## 🚀 Paso 3: Deploy en GitHub Pages (10 min)
+
+### 3.1 Configurar GitHub Pages
+```bash
+# 1. Instalar gh-pages
+npm install --save-dev gh-pages
+
+# 2. Verificar package.json tenga:
+# "homepage": "https://acrilpinturascrm-svg.github.io/Acril-Card-control"
+# "scripts": {
+#   "predeploy": "npm run build",
+#   "deploy": "gh-pages -d build"
+# }
+```
+
+### 3.2 Deploy
+```bash
+# Build y deploy en un solo comando
+npm run deploy
+```
+
+### 3.3 Configurar en GitHub
+```
+1. Ir a: https://github.com/acrilpinturascrm-svg/Acril-Card-control
+2. Ir a: Settings → Pages
+3. Source: Deploy from a branch
+4. Branch: gh-pages
+5. Folder: / (root)
+6. Click: Save
+7. Esperar 1-2 minutos
+```
+
+---
+
+## 🚀 Paso 3 (Alternativa): Deploy en Netlify (10 min)
 
 ### 3.1 Instalar Netlify CLI
 ```bash
@@ -188,8 +224,9 @@ link.click();
 ## 🎉 ¡Listo!
 
 Tu aplicación está desplegada en:
-- **URL:** https://tu-sitio.netlify.app
+- **URL Producción:** https://acrilpinturascrm-svg.github.io/Acril-Card-control
 - **Base de datos:** Supabase (500 MB gratis)
+- **Hosting:** GitHub Pages (gratis)
 - **Costo:** $0 USD/mes
 
 ---
@@ -272,4 +309,26 @@ netlify deploy --prod
 
 **Tiempo total:** ~30 minutos  
 **Costo:** $0 USD/mes  
-**Estado:** ✅ Producción lista
+**Estado:** ✅ Producción lista  
+**URL Actual:** https://acrilpinturascrm-svg.github.io/Acril-Card-control
+
+---
+
+## 📱 Características Recientes (Nov 2025)
+
+### Sistema de Plantillas WhatsApp
+- ✅ 5 plantillas personalizadas con textos de Acril
+- ✅ Nueva categoría "Descuento" para posiciones 5 y 7
+- ✅ Variable `{posicion}` para indicar posición en tarjeta
+- ✅ Sistema totalmente editable desde la interfaz
+- ✅ Selección automática según contexto del cliente
+
+### Optimización de Links
+- ✅ Links 60% más cortos (~75 caracteres)
+- ✅ Formato simplificado: `.../card?c=CLI-001`
+- ✅ Retrocompatibilidad con links antiguos
+
+### Reutilización de Ventanas
+- ✅ WhatsApp reutiliza la misma pestaña
+- ✅ No más múltiples pestañas abiertas
+- ✅ Mejor experiencia de usuario

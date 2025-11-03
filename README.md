@@ -7,7 +7,8 @@
 [![React Router](https://img.shields.io/badge/React_Router-6.28.5-CA4245.svg)](https://reactrouter.com/)
 [![PWA](https://img.shields.io/badge/PWA-Ready-4A90E2.svg)](https://web.dev/pwa/)
 [![WCAG 2.1 AA](https://img.shields.io/badge/WCAG_2.1_AA-Accessible-green.svg)](https://www.w3.org/WAI/WCAG21/quickref/)
-[![Última Actualización](https://img.shields.io/badge/Última%20Actualización-Octubre%202025-brightgreen)](https://github.com/L7Manuel/Acril-Card-control)
+[![Última Actualización](https://img.shields.io/badge/Última%20Actualización-Noviembre%202025-brightgreen)](https://github.com/acrilpinturascrm-svg/Acril-Card-control)
+[![URL Producción](https://img.shields.io/badge/Producción-Online-success)](https://acrilpinturascrm-svg.github.io/Acril-Card-control)
 [![Estado del Proyecto](https://img.shields.io/badge/Estado-100%25%20Completo-brightgreen)](https://github.com/L7Manuel/Acril-Card-control)
 [![Funcionalidades](https://img.shields.io/badge/Funcionalidades-Empresariales-blue)](https://github.com/L7Manuel/Acril-Card-control)
 [![Documentación](https://img.shields.io/badge/Documentación-Completa-green)](https://github.com/L7Manuel/Acril-Card-control)
@@ -84,7 +85,103 @@
 
 ## 🏆 Estado Actual - Production Ready
 
-### 🎉 **ACTUALIZACIÓN CRÍTICA (14 Oct 2025) - SISTEMA DE BACKUP Y GOOGLE DRIVE 100% FUNCIONAL** ⭐ NUEVO
+### 🎉 **ACTUALIZACIÓN RECIENTE (3 Nov 2025) - SISTEMA DE PLANTILLAS WHATSAPP Y OPTIMIZACIÓN** ⭐ NUEVO
+
+#### 🚀 **MEJORAS IMPLEMENTADAS - COMPLETADO**
+Se implementaron **3 mejoras críticas** que optimizan la comunicación con clientes y mejoran la experiencia de usuario:
+
+**✅ Mejoras Implementadas:**
+1. **Sistema de Plantillas WhatsApp Personalizado** - 5 plantillas con textos de Acril
+2. **Reutilización de Ventanas WhatsApp** - Eliminación de múltiples pestañas
+3. **Links Acortados 60%** - Optimización de URLs compartidas
+
+**🚀 CARACTERÍSTICAS NUEVAS:**
+
+#### 1. **Sistema de Plantillas WhatsApp Completo** ⭐ NUEVO
+- **Características**:
+  - ✅ 5 plantillas personalizadas con textos de Acril
+  - ✅ Nueva categoría "Descuento" (💰) para posiciones 5 y 7
+  - ✅ Nueva variable `{posicion}` para indicar posición en tarjeta
+  - ✅ Sistema totalmente editable desde la interfaz
+  - ✅ Botón "Restaurar Predeterminadas" para recuperar plantillas
+  - ✅ Selección automática de plantilla según contexto del cliente
+
+**Plantillas Disponibles:**
+- **Bienvenida** (👋): Cliente nuevo con 0 sellos - Incluye info de descuentos y Cashea
+- **Compra Recurrente** (🛍️): Cliente con compras previas - Avance en tarjeta
+- **Descuento 5%** (💰): Posición 5 o 7 alcanzada - Felicitación por descuento
+- **Premio Completo** (🎁): Posición 10 completada - 5% + obsequio
+- **Recordatorio** (⏰): Cliente inactivo - Recordatorio con Acril economía de lujo
+
+**Variables de Plantillas:**
+- `{nombre}`, `{negocio}`, `{sellos}`, `{sellosEnTarjeta}`
+- `{posicion}` ⭐ NUEVA - Indica posición actual en la tarjeta
+- `{sellosFaltantes}`, `{stampsPerReward}`, `{premios}`
+- `{link}`, `{monto}`, `{fecha}`
+
+#### 2. **Reutilización de Ventanas WhatsApp** ⭐ CORREGIDO
+- **Problema resuelto**: Cada clic abría una nueva pestaña de WhatsApp
+- **Solución**: Eliminados parámetros `noopener,noreferrer` de window.open
+- **Resultado**: Ahora reutiliza la misma pestaña correctamente
+- **Beneficio**: Mejor experiencia de usuario, menos pestañas abiertas
+
+#### 3. **Links Acortados 60%** ⭐ OPTIMIZADO
+- **Antes**: ~200 caracteres con múltiples parámetros (customer, data, utm_source, etc.)
+- **Ahora**: ~75 caracteres con solo parámetro `c` (código del cliente)
+- **Formato**: `https://acrilpinturascrm-svg.github.io/Acril-Card-control/card?c=CLI-001`
+- **Retrocompatibilidad**: Links antiguos siguen funcionando
+- **Beneficios**: Más fácil de compartir, mejor UX en WhatsApp
+
+### 📊 **Impacto de las Mejoras**
+| Métrica | Antes | Después | Mejora |
+|---------|-------|---------|--------|
+| **Longitud de Links** | ~200 caracteres | ~75 caracteres | -60% ⬇️ |
+| **Ventanas WhatsApp** | Nueva cada vez | Reutiliza pestaña | ✅ |
+| **Plantillas** | 3 básicas | 5 personalizadas | +67% ⬆️ |
+| **Variables** | 9 variables | 10 variables | +1 ⬆️ |
+| **Bundle Size** | 240.09 kB | 239.86 kB | -230 B ⬇️ |
+| **Personalización** | Limitada | Total | ✅ |
+
+### 🎯 **ESTADO ACTUAL - SISTEMA WHATSAPP 100% OPTIMIZADO**
+
+**El sistema de comunicación WhatsApp está completamente optimizado y listo para producción**.
+
+#### **✅ Funcionalidades Verificadas:**
+- ✅ **Plantillas Personalizadas** - 5 plantillas con textos de Acril
+- ✅ **Edición en Tiempo Real** - Modificar plantillas desde la interfaz
+- ✅ **Selección Automática** - Plantilla correcta según contexto
+- ✅ **Reutilización de Ventanas** - Sin múltiples pestañas
+- ✅ **Links Optimizados** - 60% más cortos
+- ✅ **Retrocompatibilidad** - Links antiguos funcionan
+- ✅ **Variables Dinámicas** - 10 variables disponibles
+
+#### **🔧 Archivos Modificados en Esta Actualización:**
+- `src/components/WhatsAppTemplateManager.jsx` - Sistema completo de plantillas
+- `src/utils/templateVariables.js` - Nueva variable `{posicion}`
+- `src/utils/whatsapp.js` - Reutilización de ventanas
+- `src/components/CustomerDetails.jsx` - Integración de plantillas
+- `src/components/LoyaltyCardSystem.jsx` - Uso de plantillas nuevas
+- `src/components/PublicCustomerCard.jsx` - Links acortados
+- `src/utils/customerDataEncoder.js` - Simplificación de datos
+- `ACTUALIZACION_PLANTILLAS_WHATSAPP.md` - Documentación completa
+
+#### **🚀 Deploy Verificado:**
+```bash
+✅ Commit: e685f30
+✅ Push a GitHub: master
+✅ Build: Compiled successfully
+✅ Bundle: 239.86 kB (optimizado)
+✅ Deploy: GitHub Pages
+✅ URL: https://acrilpinturascrm-svg.github.io/Acril-Card-control
+```
+
+#### **📚 Documentación:**
+- Ver `ACTUALIZACION_PLANTILLAS_WHATSAPP.md` para detalles completos
+- Ver `AI_ASSISTANT_PROMPT.md` para contexto técnico
+
+---
+
+### 🎉 **ACTUALIZACIÓN CRÍTICA (14 Oct 2025) - SISTEMA DE BACKUP Y GOOGLE DRIVE 100% FUNCIONAL** ⭐ ANTERIOR
 
 #### 🔧 **CORRECCIONES CRÍTICAS IMPLEMENTADAS - COMPLETADO**
 Se han resuelto **5 problemas críticos** que impedían el funcionamiento del sistema de backup y Google Drive, elevando la estabilidad y confiabilidad del sistema a **nivel producción**:

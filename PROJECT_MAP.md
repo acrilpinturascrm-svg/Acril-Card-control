@@ -2,6 +2,10 @@
 
 > **Documentación técnica completa de la arquitectura y componentes del sistema de fidelización ACRILCARD**
 
+**URL Producción:** https://acrilpinturascrm-svg.github.io/Acril-Card-control  
+**Última Actualización:** 3 de Noviembre, 2025  
+**Versión:** 1.0.0
+
 ---
 
 ## 📁 ESTRUCTURA GENERAL DEL PROYECTO
@@ -89,42 +93,53 @@ ACRILCARD/
 - **Características**:
   - 👁️ **Mostrar/ocultar contraseña**
   - 🔒 **Control de intentos fallidos**
-  - 🎯 **Validación en tiempo real**
 
 #### **ProtectedRoute.jsx - Rutas Protegidas**
 - **Función**: Control de acceso por permisos
 - **Características**: Verificación granular de permisos
 
-### ⚙️ Sistema de Configuración
+### Sistema de Configuración
 
 #### **Settings.jsx - Panel de Configuración**
 - **Función**: Configuración del sistema (solo admin)
 - **Características**:
-  - 🔧 **Configuración de sellos**
-  - 👥 **Gestión de usuarios**
-  - 🧹 **Limpieza de cache**
+  - **Configuración de sellos**
+  - **Gestión de usuarios**
+  - **Limpieza de cache**
+  - **Plantillas de WhatsApp** 
+
+#### **WhatsAppTemplateManager.jsx - Gestor de Plantillas** 
+- **Función**: Sistema completo de plantillas WhatsApp
+- **Características**:
+  - **5 plantillas personalizadas** con textos de Acril
+  - **Nueva categoría "Descuento"** para posiciones 5 y 7
+  - **Sistema editable** desde la interfaz
+  - **Botón "Restaurar Predeterminadas"**
+  - **Selección automática** según contexto del cliente
+  - **Vista previa** con datos de ejemplo
+  - **10 variables dinámicas** incluyendo `{posicion}`
 
 #### **BackupManager.jsx - Gestor de Backups**
 - **Función**: Sistema completo de respaldos
 - **Características**:
-  - 💾 **Backup local**: Descarga automática
-  - ☁️ **Google Drive**: Sincronización en la nube
-  - ⏰ **Backup automático**: Programado
-  - 📊 **Historial**: Seguimiento de backups
+  - **Backup local**: Descarga automática
+  - **Google Drive**: Sincronización en la nube
+  - **Backup automático**: Programado
+  - **Historial**: Seguimiento de backups
 
 #### **BackupFloatingAlert.jsx - Alerta Flotante de Backup (NUEVO)**
 - **Función**: Sistema de alertas inteligentes para backup
 - **Características**:
-  - 🚨 **Alertas flotantes**: Esquina superior derecha
-  - 🎯 **Lógica inteligente**: Aparece según necesidad (7/14 días)
-  - 🎨 **4 tipos de alerta**: Warning, Urgent, Success, Info
-  - ⚡ **Backup rápido**: Modal con opciones Local/Google Drive
-  - 💤 **Snooze y dismiss**: Control de usuario avanzado
-  - 🔄 **Portal rendering**: Z-index alto, fuera del DOM normal
+  - **Alertas flotantes**: Esquina superior derecha
+  - **Lógica inteligente**: Aparece según necesidad (7/14 días)
+  - **4 tipos de alerta**: Warning, Urgent, Success, Info
+  - **Backup rápido**: Modal con opciones Local/Google Drive
+  - **Snooze y dismiss**: Control de usuario avanzado
+  - **Portal rendering**: Z-index alto, fuera del DOM normal
 
 ---
 
-## 🌐 CONTEXTS (Estado Global)
+## CONTEXTS (Estado Global)
 
 ### **AuthContext.js - Gestión de Autenticación**
 - **Estado Global**: Usuario, permisos, autenticación
@@ -154,15 +169,15 @@ ACRILCARD/
 
 ---
 
-## 🪝 CUSTOM HOOKS
+## CUSTOM HOOKS
 
 ### **useAutoBackup.js - Sistema de Backup (481 líneas)**
 - **Función**: Gestión completa de backups
 - **Características**:
-  - 🔄 **Backup automático**: Verificación periódica
-  - ☁️ **Google Drive**: Integración OAuth2
-  - 📊 **Estadísticas**: Métricas de backup
-  - ⚙️ **Configuración**: Variables de entorno
+  - **Backup automático**: Verificación periódica
+  - **Google Drive**: Integración OAuth2
+  - **Estadísticas**: Métricas de backup
+  - **Configuración**: Variables de entorno
 
 ### **useAccessibility.js - Accesibilidad**
 - **Función**: Mejoras de accesibilidad WCAG 2.1 AA
@@ -179,18 +194,18 @@ ACRILCARD/
 ### **useBackupAlert.js - Sistema de Alertas de Backup (NUEVO)**
 - **Función**: Gestión inteligente de alertas de backup
 - **Características**:
-  - 🧠 **Lógica inteligente**: Calcula cuándo mostrar alertas
-  - ⏰ **Intervalos configurables**: 7 días warning, 14 días urgent
-  - 💤 **Snooze y dismiss**: Persistencia de preferencias
-  - 📊 **Estadísticas**: Días desde último backup
-  - 🔄 **Auto-verificación**: Cada 30 minutos
-  - ✅ **Alertas de éxito**: Feedback post-backup
+  - **Lógica inteligente**: Calcula cuándo mostrar alertas
+  - **Intervalos configurables**: 7 días warning, 14 días urgent
+  - **Snooze y dismiss**: Persistencia de preferencias
+  - **Estadísticas**: Días desde último backup
+  - **Auto-verificación**: Cada 30 minutos
+  - **Alertas de éxito**: Feedback post-backup
 
 ---
 
-## 🛠️ SERVICIOS Y UTILIDADES
+## SERVICIOS Y UTILIDADES
 
-### 📊 Servicios
+### Servicios
 
 #### **customerStore.js - Almacenamiento de Datos**
 - **Función**: Gestión de datos de clientes
@@ -200,7 +215,7 @@ ACRILCARD/
 - **Función**: Integración con Google Drive API
 - **Características**: OAuth2, upload, download, gestión de archivos
 
-### 🔧 Utilidades
+### Utilidades
 
 #### **permissions.simple.js - Sistema de Permisos (266 líneas)**
 - **Función**: Control granular de acceso
@@ -214,9 +229,29 @@ ACRILCARD/
 - **Función**: Funciones de negocio centralizadas
 - **Características**: Generación de códigos, validaciones
 
-#### **whatsapp.js - Integración WhatsApp**
+#### **whatsapp.js - Integración WhatsApp** 
 - **Función**: Envío de tarjetas por WhatsApp
-- **Características**: URLs personalizadas, templates
+- **Características**: 
+  - **URLs personalizadas optimizadas** (60% más cortas)
+  - **Reutilización de ventanas** (sin múltiples pestañas)
+  - **Sistema de plantillas dinámicas**
+  - **Selección automática de plantilla**
+
+#### **templateVariables.js - Variables de Plantillas** 
+- **Función**: Gestión de variables dinámicas
+- **Características**:
+  - **10 variables disponibles**
+  - **Nueva variable `{posicion}`** para posición en tarjeta
+  - **Reemplazo automático de variables**
+  - **Validación de variables**
+
+#### **customerDataEncoder.js - Codificación de Datos** 
+- **Función**: Codificación y decodificación de datos de clientes
+- **Características**:
+  - **Links acortados 60%** (de ~200 a ~75 caracteres)
+  - **Formato simplificado**: `.../card?c=CLI-001`
+  - **Retrocompatibilidad** con links antiguos
+  - **Decodificación automática** de múltiples formatos
 
 #### **errorHandler.js - Manejo de Errores (668 líneas)**
 - **Función**: Sistema centralizado de errores
@@ -224,7 +259,7 @@ ACRILCARD/
 
 ---
 
-## 🧪 COMPONENTES DE TESTING
+## COMPONENTES DE TESTING
 
 ### Componentes de Prueba
 - **TestErrorHandling.jsx**: Pruebas de manejo de errores
@@ -238,7 +273,7 @@ ACRILCARD/
 
 ---
 
-## 🎨 COMPONENTES COMUNES
+## COMPONENTES COMUNES
 
 ### UI Components
 - **Button.jsx**: Botón reutilizable con variantes
@@ -255,7 +290,7 @@ ACRILCARD/
 
 ---
 
-## 🔄 FLUJO DE LA APLICACIÓN
+## FLUJO DE LA APLICACIÓN
 
 ```
 App.js (Entrada) → Providers → ¿Autenticado?
@@ -275,24 +310,25 @@ AuthContext.login()    Navigation.jsx + LoyaltyCardSystem.jsx
 
 ---
 
-## 📊 MÉTRICAS DEL PROYECTO
+## MÉTRICAS DEL PROYECTO
 
-### 📈 Estadísticas de Código
-- **Total de archivos**: 49 archivos fuente (+2 nuevos)
-- **Componentes React**: 26+ componentes (+1 BackupFloatingAlert)
-- **Custom Hooks**: 7 hooks especializados (+1 useBackupAlert)
+### Estadísticas de Código
+- **Total de archivos**: 52+ archivos fuente
+- **Componentes React**: 27+ componentes (incluyendo WhatsAppTemplateManager)
+- **Custom Hooks**: 7 hooks especializados
 - **Contexts**: 3 providers globales
 - **Servicios**: 3 servicios principales
-- **Utilidades**: 8+ funciones utilitarias
+- **Utilidades**: 10+ funciones utilitarias (incluyendo templateVariables, customerDataEncoder)
 
-### 🎯 Funcionalidades Principales
+### Funcionalidades Principales
 1. **Sistema de Fidelización**: Gestión completa de tarjetas
 2. **Autenticación Granular**: 28 permisos específicos
 3. **Backup Automático**: Local + Google Drive
-4. **Alertas Inteligentes**: Sistema flotante de backup (NUEVO)
+4. **Alertas Inteligentes**: Sistema flotante de backup
 5. **Reportes Avanzados**: Analytics y métricas
 6. **PWA Completa**: Instalable y offline
 7. **Accesibilidad**: WCAG 2.1 AA compliant
+8. **Sistema WhatsApp**: Plantillas personalizadas y links optimizados ⭐ NUEVO
 
 ### 🔐 Sistema de Permisos
 - **Admin**: 28 permisos (acceso completo)
@@ -331,4 +367,27 @@ AuthContext.login()    Navigation.jsx + LoyaltyCardSystem.jsx
 
 **Desarrollado con ❤️ para ACRIL Pinturas - © 2025**
 
-*Mapa del proyecto actualizado: Septiembre 2025 - Versión 1.4.0 con Sistema de Alertas Inteligentes*
+*Mapa del proyecto actualizado: Noviembre 2025 - Versión 1.0.0 con Sistema de Plantillas WhatsApp*
+
+---
+
+## 🔄 Últimas Actualizaciones (Nov 2025)
+
+### Sistema de Plantillas WhatsApp ⭐ NUEVO
+- **WhatsAppTemplateManager.jsx**: Gestor completo de plantillas
+- **templateVariables.js**: 10 variables dinámicas
+- **5 plantillas personalizadas**: Bienvenida, Compra Recurrente, Descuento 5%, Premio Completo, Recordatorio
+- **Nueva categoría**: "Descuento" para posiciones 5 y 7
+- **Nueva variable**: `{posicion}` para indicar posición en tarjeta
+
+### Optimización de Comunicaciones ⭐ MEJORADO
+- **Links acortados 60%**: De ~200 a ~75 caracteres
+- **Reutilización de ventanas**: WhatsApp reutiliza la misma pestaña
+- **Retrocompatibilidad**: Links antiguos siguen funcionando
+- **Mejor UX**: Menos pestañas, links más cortos
+
+### Deploy Actual
+- **URL**: https://acrilpinturascrm-svg.github.io/Acril-Card-control
+- **Commit**: e685f30
+- **Bundle**: 239.86 kB (optimizado)
+- **Estado**: ✅ Producción 100% funcional
