@@ -97,6 +97,8 @@ const StampControls = React.memo(({
     
     // Cargar plantillas usando el sistema centralizado (con fallback automático)
     const templates = getAllTemplates();
+    console.log('📋 Total plantillas cargadas:', templates.length);
+    console.log('📋 IDs de plantillas:', templates.map(t => t.id));
     
     // Seleccionar plantilla según el contexto
     let selectedTemplate;
@@ -104,19 +106,34 @@ const StampControls = React.memo(({
     const hasReward = totalRewards > 0;
     const isAtDiscount = currentStamps === 5 || currentStamps === 7;
     
+    console.log('🔍 Contexto del cliente:', {
+      totalStamps,
+      currentStamps,
+      totalRewards,
+      isNewCustomer,
+      hasReward,
+      isAtDiscount
+    });
+    
     if (isNewCustomer) {
       // Cliente nuevo - usar plantilla de bienvenida
       selectedTemplate = templates.find(t => t.id === 'welcome');
+      console.log('🎯 Selección: Cliente nuevo -> Plantilla Bienvenida');
     } else if (hasReward) {
       // Tiene premio completo - usar plantilla de premio completo
       selectedTemplate = templates.find(t => t.id === 'reward_complete');
+      console.log('🎯 Selección: Premio completo -> Plantilla Premio');
     } else if (isAtDiscount) {
       // Está en posición de descuento - usar plantilla de descuento
       selectedTemplate = templates.find(t => t.id === 'discount_5_7');
+      console.log('🎯 Selección: Descuento -> Plantilla Descuento 5%');
     } else {
       // Compra recurrente - usar plantilla de compra
       selectedTemplate = templates.find(t => t.id === 'stamps_added');
+      console.log('🎯 Selección: Compra recurrente -> Plantilla Compra');
     }
+    
+    console.log('✅ Plantilla seleccionada:', selectedTemplate ? selectedTemplate.name : 'NINGUNA');
     
     // Si no hay plantilla guardada, usar mensaje por defecto
     if (!selectedTemplate) {
@@ -136,17 +153,29 @@ const StampControls = React.memo(({
     }
     
     // Usar plantilla con reemplazo de variables
+    const sellosFaltantes = stampsPerReward - currentStamps;
     const templateData = {
+      nombre: customer.name,
       customerName: customer.name,
+      negocio: businessName,
       businessName: businessName,
+      sellos: totalStamps,
       totalStamps: totalStamps,
       stampsPerReward: stampsPerReward,
+      sellosEnTarjeta: currentStamps,
       currentStamps: currentStamps,
+      sellosFaltantes: sellosFaltantes,
+      premios: totalRewards,
       totalRewards: totalRewards,
-      link: linkTarjeta
+      link: linkTarjeta,
+      posicion: currentStamps
     };
     
-    return replaceTemplateVariables(selectedTemplate.message, templateData);
+    console.log('📝 Datos para reemplazo:', templateData);
+    const finalMessage = replaceTemplateVariables(selectedTemplate.message, templateData);
+    console.log('✅ Mensaje final generado:', finalMessage.substring(0, 100) + '...');
+    
+    return finalMessage;
   }, [customer, currentStamps, totalStamps, totalRewards, stampsPerReward]);
 
   const handleAddStamp = useCallback(() => {

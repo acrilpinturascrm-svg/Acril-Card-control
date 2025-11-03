@@ -117,8 +117,8 @@ export function enviarTarjetaPorWhatsApp(telefonoCliente, nombreCliente, idClien
         }
         
         // Abrir nueva ventana y guardar referencia
-        // Usar '_blank' permite mejor reutilización en diferentes navegadores
-        whatsappWindow = window.open(targetUrl, '_blank');
+        // Usar nombre específico permite reutilizar la misma ventana
+        whatsappWindow = window.open(targetUrl, 'whatsapp_acrilcard');
         
         if (whatsappWindow) {
           whatsappWindow.focus();
@@ -304,8 +304,8 @@ export function enviarTarjetaPorWhatsApp(telefonoCliente, nombreCliente, idClien
       }
       
       // Abrir nueva ventana y guardar referencia
-      // Usar '_blank' permite mejor reutilización en diferentes navegadores
-      whatsappWindow = window.open(targetUrl, '_blank');
+      // Usar nombre específico permite reutilizar la misma ventana
+      whatsappWindow = window.open(targetUrl, 'whatsapp_acrilcard');
       
       if (whatsappWindow) {
         whatsappWindow.focus();
