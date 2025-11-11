@@ -7,7 +7,11 @@ import { getCustomerByCode } from '../services/customersService';
 /**
  * Componente público para mostrar la tarjeta de fidelidad del cliente
  * No requiere autenticación - accesible desde enlaces de WhatsApp
- * Sistema híbrido: Intenta localStorage primero, luego datos de URL
+ * 
+ * Estrategia de carga (prioridad):
+ * 1. Supabase (datos siempre actualizados) ⭐
+ * 2. localStorage (fallback si Supabase falla)
+ * 3. URL encodedData (fallback final)
  */
 const PublicCustomerCard = () => {
   const [searchParams] = useSearchParams();
@@ -34,80 +38,71 @@ const PublicCustomerCard = () => {
           return;
         }
 
-        // ESTRATEGIA 1: Intentar cargar desde localStorage (si existe)
-        const stored = localStorage.getItem('customers');
-        if (stored && customerParam) {
-          console.log('📂 Intentando cargar desde localStorage...');
-          try {
-            const customers = JSON.parse(stored);
-            console.log('📋 Total de clientes en localStorage:', customers.length);
-            
-            // Buscar cliente por código o ID
-            const foundCustomer = customers.find(c => {
-              const matchCode = c.code === customerParam;
-              const matchId = c.id === customerParam;
-              return matchCode || matchId;
-            });
-
-            if (foundCustomer) {
-              console.log('✅ Cliente encontrado en localStorage:', foundCustomer.name, foundCustomer.code);
-              setCustomer(foundCustomer);
-              setDataSource('localStorage');
-              
-              // Cargar configuración de sellos
-              const savedStamps = localStorage.getItem('stampsPerReward');
-              if (savedStamps) {
-                setStampsPerReward(parseInt(savedStamps, 10));
-              }
-              
-              setLoading(false);
-              return; // Éxito, salir
-            } else {
-              console.log('⚠️ Cliente no encontrado en localStorage, intentando con datos de URL...');
-            }
-          } catch (localStorageError) {
-            console.warn('⚠️ Error al leer localStorage:', localStorageError);
-          }
-        }
-
-        // ESTRATEGIA 2: Intentar decodificar datos de la URL (fallback)
-        if (encodedData) {
-          console.log('🔓 Intentando decodificar datos de la URL...');
-          const decodedCustomer = decodeCustomerData(encodedData);
-          
-          if (decodedCustomer) {
-            console.log('✅ Cliente decodificado de URL:', decodedCustomer.name, decodedCustomer.code);
-            setCustomer(decodedCustomer);
-            setDataSource('URL');
-            setLoading(false);
-            return; // Éxito, salir
-          } else {
-            console.error('❌ No se pudo decodificar los datos de la URL');
-          }
-        }
-
-        // ESTRATEGIA 3: Buscar en Supabase (si no está en localStorage ni en URL)
+        // ESTRATEGIA 1: Buscar en Supabase PRIMERO (datos siempre actualizados) ⭐ OPTIMIZADO
         if (customerParam) {
           console.log('🔍 Buscando en Supabase por código:', customerParam);
           try {
             const supabaseCustomer = await getCustomerByCode(customerParam);
             
             if (supabaseCustomer) {
-              console.log('✅ Cliente encontrado en Supabase:', supabaseCustomer.name, supabaseCustomer.code);
+              console.log('✅ Cliente encontrado en Supabase (datos actualizados):', supabaseCustomer.name, supabaseCustomer.code);
               setCustomer(supabaseCustomer);
               setDataSource('Supabase');
               
-              // Cargar configuración de sellos (usar valor por defecto si no existe)
+              // Cargar configuración de sellos
               const savedStamps = localStorage.getItem('stampsPerReward');
               setStampsPerReward(savedStamps ? parseInt(savedStamps, 10) : 10);
               
               setLoading(false);
-              return; // Éxito, salir
+              return; // Éxito con datos frescos
             } else {
-              console.log('⚠️ Cliente no encontrado en Supabase');
+              console.log('⚠️ Cliente no encontrado en Supabase, intentando fallbacks...');
             }
           } catch (supabaseError) {
             console.error('❌ Error al buscar en Supabase:', supabaseError);
+            console.log('⚠️ Intentando fallbacks (localStorage/URL)...');
+          }
+        }
+
+        // ESTRATEGIA 2 (FALLBACK): Intentar cargar desde localStorage
+        const stored = localStorage.getItem('customers');
+        if (stored && customerParam) {
+          console.log('📂 Fallback: Intentando cargar desde localStorage...');
+          try {
+            const customers = JSON.parse(stored);
+            const foundCustomer = customers.find(c => 
+              c.code === customerParam || c.id === customerParam
+            );
+
+            if (foundCustomer) {
+              console.log('✅ Cliente encontrado en localStorage (fallback):', foundCustomer.name);
+              setCustomer(foundCustomer);
+              setDataSource('localStorage (fallback)');
+              
+              const savedStamps = localStorage.getItem('stampsPerReward');
+              if (savedStamps) {
+                setStampsPerReward(parseInt(savedStamps, 10));
+              }
+              
+              setLoading(false);
+              return;
+            }
+          } catch (localStorageError) {
+            console.warn('⚠️ Error al leer localStorage:', localStorageError);
+          }
+        }
+
+        // ESTRATEGIA 3 (FALLBACK): Intentar decodificar datos de la URL
+        if (encodedData) {
+          console.log('🔓 Fallback: Intentando decodificar datos de la URL...');
+          const decodedCustomer = decodeCustomerData(encodedData);
+          
+          if (decodedCustomer) {
+            console.log('✅ Cliente decodificado de URL (fallback):', decodedCustomer.name);
+            setCustomer(decodedCustomer);
+            setDataSource('URL (fallback)');
+            setLoading(false);
+            return;
           }
         }
 
